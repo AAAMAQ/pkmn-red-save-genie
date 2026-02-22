@@ -225,3 +225,98 @@ Reconstructing their internal logic requires:
 - Defensive programming
 
 Pkmn Red Save Genie demonstrates how modern software engineering principles can be applied to legacy binary systems.
+
+---
+## ▶ How to Use
+
+### 1️⃣ Obtain Your Own Save File
+
+This program requires a legally obtained Pokémon Red `.sav` file.
+
+You can extract your save file from:
+- A physical cartridge using a save dumper
+
+
+⚠️ This project does **NOT** provide ROMs or save files.
+
+---
+
+### 2️⃣ Place the Save File
+
+Place your `.sav` file in the same directory as the compiled executable.
+
+Example:
+
+```
+/Pkmn Red Save Genie
+    ├── SaveGenie (executable)
+    ├── Pokemon - Red Version (USA, Europe) (SGB Enhanced).sav
+```
+
+---
+
+### 3️⃣ Update the Input Filename (if necessary)
+
+Inside `main.cpp`, update this line to match your save file name:
+
+```cpp
+// Replace with your own legally obtained save file
+const std::string inputPath =
+    "Pokemon - Red Version (USA, Europe) (SGB Enhanced).sav";
+```
+
+If your file has a different name, change the string accordingly.
+
+You may also provide a full file path if the save is located elsewhere.
+
+---
+
+### 4️⃣ Build the Program
+
+Compile using C++17 or later.
+
+Example (manual build):
+
+```bash
+g++ -std=c++17 *.cpp -o SaveGenie
+```
+
+Or build using the included Xcode project.
+
+---
+
+### 5️⃣ Run the Program
+
+Execute:
+
+```bash
+./SaveGenie
+```
+
+The program will:
+
+- Load the save file
+- Create a backup:
+  ```
+  (BACKUP) <yourfile>.sav
+  ```
+- Validate the save structure
+- Display a full readable summary
+- Verify checksum integrity
+
+If editing mode is enabled, it will create:
+
+```
+(EDITED) <yourfile>.sav
+```
+
+Your original save file will never be overwritten.
+
+---
+
+## 🔒 Safety Notes
+
+- The original save file is never modified.
+- A backup is always created before edits.
+- Checksums are validated and repaired automatically.
+- Only properly structured 32KB Gen I save files are supported.

@@ -17,6 +17,16 @@
 int main() {
     using namespace savegenie;
 
+    // ------------------------------------------------------------
+    // NOTE:
+    // Replace the filename below with your own legally obtained
+    // Pokémon Red save file (.sav).
+    //
+    // The file must be located in the same directory as the
+    // executable, or provide a full path.
+    //
+    // This project does NOT distribute ROMs or save files.
+    // ------------------------------------------------------------
     const std::string inputPath =
         "Pokemon - Red Version (USA, Europe) (SGB Enhanced).sav";
 
