@@ -34,11 +34,34 @@ std::string TrainerSummary::ToString() const {
     oss << "Money:        " << "₽"<< money << "\n";
     oss << "Coins:        " << coins << "\n";
 
-    // Badges (bitfield)
-    oss << "Badges:       0x" << std::hex << std::setw(2) << std::setfill('0')
-        << static_cast<int>(badges) << std::dec << "\n";
+    // Badges (bitfield) each bit represents each gym
+    static const char* kBadgeNames[8] = {
+        "Boulder (Brock)",
+        "Cascade (Misty)",
+        "Thunder (Lt. Surge)",
+        "Rainbow (Erika)",
+        "Soul (Koga)",
+        "Marsh (Sabrina)",
+        "Volcano (Blaine)",
+        "Earth (Giovanni)"
+    };
 
-    oss << "Location:     MapID=" << static_cast<int>(mapId)
+    /*oss << "Badges:       0x" << std::hex << std::setw(2) << std::setfill('0')
+        << static_cast<int>(badges) << std::dec << "\n";*/
+
+    oss << "Badges List:  "<<std::endl;
+    oss << "1.";
+    bool first = true;
+    for (int i = 0; i < 8; ++i) {
+        const bool has = (badges & static_cast<u8>(1u << i)) != 0;
+        if (!first) oss << (i+1)<<".";
+        first = false;
+        oss << kBadgeNames[i] << (has ? " ->Yes" : " ->No")<<std::endl;
+    }
+    oss << "\n";
+
+    // Map Location
+    oss << "Location:     MapID=" <<static_cast<int>(mapId)<<", Hex= ("<<Gen1MapLookup::MapIDHex[static_cast<int>(mapId)]<<") "<< Gen1MapLookup::MapIDName[static_cast<int>(mapId)]
         << " X=" << static_cast<int>(x)
         << " Y=" << static_cast<int>(y) << "\n";
 

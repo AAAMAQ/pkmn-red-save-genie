@@ -29,7 +29,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
-
+#include <array>
 namespace savegenie {
 
 // =========================
@@ -176,6 +176,28 @@ public:
     static std::size_t BoxBaseOffsetByIndex1to12(int boxIndex1to12);
     static std::size_t BankAllChecksumOffsetForBoxIndex1to12(int boxIndex1to12);
     static std::size_t BankPerBoxChecksumsBaseOffsetForBoxIndex1to12(int boxIndex1to12);
+};
+
+// =========================
+// Gen I Map ID lookup (0x00..0xFF)
+// =========================
+// Source: "List of maps by index number (Generation I)" (Glitch City Wiki PDF).
+// Any entry marked Unused/Invalid in the source is normalized here to "INVALID".
+//
+// Notes:
+//  - Map IDs are dense (0..255), so a fixed-size lookup is simplest.
+//  - We store three parallel vectors (as requested):
+//      MapIDName[256] -> human-readable map name (or "INVALID")
+//      MapIDNo[256]   -> decimal ID (0..255)
+//      MapIDHex[256]  -> hex string ("0x00".."0xFF")
+//
+
+class Gen1MapLookup {
+public:
+    static const std::string MapIDName[256]; // size 256
+    static const int MapIDNo[256];           // size 256
+    static const std::string MapIDHex[256];  // size 256
+    static std::string NameFromId(u8 mapId);
 };
 
 // =========================
