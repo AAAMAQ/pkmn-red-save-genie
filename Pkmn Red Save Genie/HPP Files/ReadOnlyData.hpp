@@ -92,6 +92,48 @@ public:
 };
 
 // =========================================================
+// Pokédex Summary Model
+// =========================================================
+
+class PokedexSummary {
+public:
+    int ownedCount = 0;
+    int seenCount = 0;
+
+    // Dex numbers (1..151) that are owned/seen
+    std::vector<int> ownedDexNos;
+    std::vector<int> seenDexNos;
+
+    //English names (filled using Gen1SpeciesLookup::PokeDex + NameFromId)
+    std::vector<std::string> ownedNames;
+    std::vector<std::string> seenNames;
+    std::string ToString() const;
+    
+};
+
+// =========================================================
+// Hall of Fame Models (Bank 0)
+// =========================================================
+
+class HallOfFamePokemon {
+public:
+    u8 speciesId = 0;
+    u8 level = 0;
+    std::string name; // Gen I text decoded Ex: "PIKAPI"
+    std::string speciesName; // Ex: "PIKACHU"
+
+    std::string ToString() const;
+};
+
+class HallOfFameEntry {
+public:
+    int entryIndex = 0; // 1..N
+    std::vector<HallOfFamePokemon> team; // up to 6
+
+    std::string ToString() const;
+};
+
+// =========================================================
 // ReadOnlyData (Main Reader Class)
 // =========================================================
 
@@ -107,6 +149,13 @@ public:
 
     // --- Flags ---
     FlagSummary GetEventFlagSummary() const;
+
+    // --- Pokédex ---
+    PokedexSummary GetPokedexSummary(bool includeNames = true) const;
+
+    // --- Hall of Fame (Bank 0) ---
+    // Returns an empty list if Hall of Fame record count is 0.
+    std::vector<HallOfFameEntry> GetHallOfFame() const;
 
     // --- Raw Dump ---
     std::string DumpFullSummary() const;

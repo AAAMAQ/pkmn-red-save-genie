@@ -29,7 +29,6 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <array>
 namespace savegenie {
 
 // =========================
@@ -88,6 +87,7 @@ private:
 class Gen1Layout {
 public:
     // A standard Gen I SRAM save is 32 KiB.
+    // Sometimes the expected size may be larger instead of 0x8000 it would be 0x802c; would not be an issue but a warning would show for secure editing
     static constexpr std::size_t ExpectedSize = 0x8000;
 
     // Bank bases within the .sav file.
@@ -98,7 +98,43 @@ public:
 
     // Bank size.
     static constexpr std::size_t BankSize  = 0x2000;
+    
+    // --- Bank 0 layout (0x0000..0x1FFF) ---
+    // Bank 0 is mostly scratch/unused, but it contains the Hall of Fame records.
+    // NOTE: Bank 0 is NOT checksum-protected, so readers should parse defensively.
 
+    // Sprite scratch buffers (runtime buffers; generally not meaningful to edit)
+    static constexpr std::size_t SpriteBuffer0Off = 0x0000;
+    static constexpr std::size_t SpriteBufferLen  = 0x0188; // 0x188 bytes each
+
+    static constexpr std::size_t SpriteBuffer1Off = 0x0188;
+    static constexpr std::size_t SpriteBuffer2Off = 0x0310;
+
+    // Unused block before Hall of Fame
+    static constexpr std::size_t Bank0Unused0Off  = 0x0498;
+    static constexpr std::size_t Bank0Unused0Len  = 0x0100;
+
+    // Hall of Fame records block
+    static constexpr std::size_t HallOfFameOff    = 0x0598;
+    static constexpr std::size_t HallOfFameLen    = 0x12C0;
+
+    // Remaining unused space after Hall of Fame
+    static constexpr std::size_t Bank0Unused1Off  = 0x1858;
+    static constexpr std::size_t Bank0Unused1Len  = 0x07A8;
+
+    // --- Hall of Fame record format ---
+    // Up to 50 records, each 0x60 bytes, each record contains 6 Pokémon entries.
+    // Each Pokémon entry is 0x10 bytes:
+    //   +0x00 speciesId (u8)
+    //   +0x01 level (u8)
+    //   +0x02..+0x0C name (0x0B bytes, Gen I text, 0x50 terminator)
+    static constexpr int HallOfFameMaxRecords            = 50;
+    static constexpr std::size_t HallOfFameRecordSize    = 0x0060;
+    static constexpr int HallOfFameMonsPerRecord         = 6;
+    static constexpr std::size_t HallOfFameMonEntrySize  = 0x0010;
+
+    // Bank 1 field: Hall of Fame record count
+    static constexpr std::size_t HallOfFameRecordCountOff = 0x284E; // 1 byte
     // --- Core Bank 1 offsets (MVP fields) ---
     static constexpr std::size_t TrainerNameOff   = 0x2598;
     static constexpr std::size_t TrainerNameLen   = 11;    // includes terminator
@@ -179,6 +215,28 @@ public:
 };
 
 // =========================
+// Gen I Species Lookup
+// =========================
+// Source: Bulbapedia
+// Note:
+// - ID of each species uses the Gen I internal index (0x00..0xFF)
+// - This lookup is standardized to the internal SpeciesID (not Pokédex number)
+//
+class Gen1SpeciesLookup {
+public:
+    static const std::string SpeciesName[256];
+    static const int SpeciesNo[256];
+    static const std::string SpeciesHex[256];
+
+    // Pokédex number (index) -> Gen I internal SpeciesID mapping.
+    // Example: PokeDex[1] (Bulbasaur) -> 0x99 (153)
+    // Invalid/unused entries should be -1.
+    static const int PokeDex[256];
+
+    static std::string NameFromId(u8 speciesId);
+};
+
+// =========================
 // Gen I Map ID lookup (0x00..0xFF)
 // =========================
 // Source: "List of maps by index number (Generation I)" (Glitch City Wiki PDF).
@@ -191,6 +249,8 @@ public:
 //      MapIDNo[256]   -> decimal ID (0..255)
 //      MapIDHex[256]  -> hex string ("0x00".."0xFF")
 //
+
+
 
 class Gen1MapLookup {
 public:
