@@ -220,7 +220,7 @@ std::string BagItem::ToString() const {
 std::string BagSummary::ToString() const {
     std::ostringstream oss;
 
-    oss << "Bag Count: " << itemCount << "\n";
+    oss << "Item Count: " << itemCount << "\n"; // Types of items
     for (std::size_t i = 0; i < items.size(); ++i) {
         oss << "  " << (i + 1) << ") " << items[i].ToString() << "\n";
     }
