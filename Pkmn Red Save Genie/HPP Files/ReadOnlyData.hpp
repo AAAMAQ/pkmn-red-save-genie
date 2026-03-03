@@ -112,6 +112,32 @@ public:
 };
 
 // =========================================================
+// Bag Items Models
+// =========================================================
+
+class BagItem {
+public:
+    u8 itemId = 0;
+    u8 quantity = 0;
+
+    // English name via Gen1ItemLookup
+    std::string itemName;
+
+    // Hex string via Gen1ItemLookup
+    std::string itemHex;
+
+    std::string ToString() const;
+};
+
+class BagSummary {
+public:
+    int itemCount = 0;
+    std::vector<BagItem> items;
+
+    std::string ToString() const;
+};
+
+// =========================================================
 // Hall of Fame Models (Bank 0)
 // =========================================================
 
@@ -152,6 +178,12 @@ public:
 
     // --- Pokédex ---
     PokedexSummary GetPokedexSummary(bool includeNames = true) const;
+
+    // --- Bag Items ---
+    BagSummary GetBagSummary(bool includeNamesAndHex = true) const;
+    
+    // --- PC Item Box ---
+    BagSummary GetPCItemBoxSummary(bool includeNamesAndHex = true) const;
 
     // --- Hall of Fame (Bank 0) ---
     // Returns an empty list if Hall of Fame record count is 0.

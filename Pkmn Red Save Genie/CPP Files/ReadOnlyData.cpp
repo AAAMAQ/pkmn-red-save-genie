@@ -192,6 +192,122 @@ std::string HallOfFameEntry::ToString() const {
 }
 
 // =========================================================
+// BagItem / BagSummary
+// =========================================================
+
+std::string BagItem::ToString() const {
+    std::ostringstream oss;
+
+    // Example output:
+    //  - POTION (0x14) x12
+    //  - INVALID (0x7A) x3
+    if (!itemName.empty()) oss << itemName;
+    else oss << "INVALID";
+
+    if (!itemHex.empty()) oss << " (" << itemHex << ")";
+    else {
+        // Fallback hex if not provided
+        static const char* kHex = "0123456789ABCDEF";
+        oss << " (0x";
+        oss << kHex[(itemId >> 4) & 0xF] << kHex[itemId & 0xF];
+        oss << ")";
+    }
+
+    oss << " x" << static_cast<int>(quantity);
+    return oss.str();
+}
+
+std::string BagSummary::ToString() const {
+    std::ostringstream oss;
+
+    oss << "Bag Count: " << itemCount << "\n";
+    for (std::size_t i = 0; i < items.size(); ++i) {
+        oss << "  " << (i + 1) << ") " << items[i].ToString() << "\n";
+    }
+    return oss.str();
+}
+
+// =========================================================
+// ReadOnlyData::GetBagSummary
+// =========================================================
+
+BagSummary ReadOnlyData::GetBagSummary(bool includeNamesAndHex) const {
+    BagSummary out;
+
+    // Bag list lives in Bank 1 main data
+    buffer_.RequireRange(Gen1Layout::BagItemsOff, Gen1Layout::BagItemsLen);
+
+    const u8 rawCount = buffer_.ReadU8(Gen1Layout::BagItemsCountOff);
+    // Defensive clamp: Gen I bag typically supports up to 20 items
+    out.itemCount = std::clamp<int>(static_cast<int>(rawCount), 0, Gen1Layout::BagItemsMaxPairs);
+
+    std::size_t off = Gen1Layout::BagItemsPairsOff;
+
+    for (int i = 0; i < out.itemCount; ++i) {
+        // Each entry is (itemId, qty)
+        buffer_.RequireRange(off, 2);
+
+        const u8 itemId = buffer_.ReadU8(off + 0);
+        const u8 qty    = buffer_.ReadU8(off + 1);
+
+        // Defensive stop: many Gen I lists terminate with 0xFF
+        if (itemId == 0xFF) break;
+
+        BagItem bi;
+        bi.itemId = itemId;
+        bi.quantity = qty;
+
+        if (includeNamesAndHex) {
+            bi.itemName = Gen1ItemLookup::NameFromId(itemId);
+            bi.itemHex  = Gen1ItemLookup::ItemHex[static_cast<std::size_t>(itemId)];
+        }
+
+        out.items.push_back(std::move(bi));
+        off += 2;
+    }
+
+    return out;
+}
+
+
+// =========================================================
+// PC Item Box Summary
+// =========================================================
+BagSummary ReadOnlyData::GetPCItemBoxSummary(bool includeNamesAndHex) const {
+    BagSummary out;
+
+    buffer_.RequireRange(Gen1Layout::PCItemBoxOff, Gen1Layout::PCItemBoxLen);
+
+    const u8 rawCount = buffer_.ReadU8(Gen1Layout::PCItemBoxCountOff);
+    out.itemCount = std::clamp<int>(static_cast<int>(rawCount), 0, Gen1Layout::PCItemBoxMaxPairs);
+
+    std::size_t off = Gen1Layout::PCItemBoxPairsOff;
+
+    for (int i = 0; i < out.itemCount; ++i) {
+        buffer_.RequireRange(off, 2);
+
+        const u8 itemId = buffer_.ReadU8(off + 0);
+        const u8 qty    = buffer_.ReadU8(off + 1);
+
+        // Defensive stop: list terminator
+        if (itemId == 0xFF) break;
+
+        BagItem bi;
+        bi.itemId = itemId;
+        bi.quantity = qty;
+
+        if (includeNamesAndHex) {
+            bi.itemName = Gen1ItemLookup::NameFromId(itemId);
+            bi.itemHex  = Gen1ItemLookup::ItemHex[static_cast<std::size_t>(itemId)];
+        }
+
+        out.items.push_back(std::move(bi));
+        off += 2;
+    }
+
+    return out;
+}
+// =========================================================
 // ReadOnlyData
 // =========================================================
 
@@ -416,7 +532,7 @@ std::vector<HallOfFameEntry> ReadOnlyData::GetHallOfFame() const {
 
             HallOfFamePokemon mon;
             mon.speciesId = species;
-            mon.speciesName = Gen1SpeciesLookup::NameFromId(static_cast<int>(species));
+            mon.speciesName = Gen1SpeciesLookup::NameFromId(static_cast<u8>(species));
             mon.level = level;
             mon.name = Gen1TextCodec::DecodeName(buffer_, monOff + 0x02, 0x0B);
 
@@ -498,7 +614,17 @@ std::string ReadOnlyData::DumpFullSummary() const {
         oss << bs.ToString() << "\n";
     }
     oss << "\n";
+    
+    
+    oss << "--- Bag ---\n";
+    const BagSummary bag = GetBagSummary(true);
+    oss << bag.ToString() << "\n";
 
+    oss << "--- PC Item Box ---\n";
+    const BagSummary pcBox = GetPCItemBoxSummary(true);
+    oss << pcBox.ToString() << "\n";
+    
+    
     // Event flags
     oss << "--- Event Flags (Summary) ---\n";
     const FlagSummary fs = GetEventFlagSummary();

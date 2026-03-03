@@ -146,6 +146,25 @@ public:
     static constexpr std::size_t BagItemsOff      = 0x25C9;
     static constexpr std::size_t BagItemsLen      = 0x2A;  // 42 bytes
 
+    // Bag item list format (Gen I):
+    // - Byte 0: item count
+    // - Then `count` pairs of (itemId, quantity)
+    // - Many lists are terminated by 0xFF; we parse defensively (stop if itemId == 0xFF).
+    static constexpr std::size_t BagItemsCountOff = BagItemsOff;          // 0x25C9
+    static constexpr std::size_t BagItemsPairsOff = BagItemsOff + 1;      // 0x25CA
+    static constexpr int BagItemsMaxPairs         = 20;                   // typical max carried items in Gen I
+    
+    // PC Item Box ("Item Box")
+    // Bulbapedia: 0x27E6 size 0x68, capacity up to 50 items.
+    // Format: [count][(itemId, qty) * count][0xFF optional terminator]
+    static constexpr std::size_t PCItemBoxOff      = 0x27E6;
+    static constexpr std::size_t PCItemBoxLen      = 0x68;
+
+    static constexpr std::size_t PCItemBoxCountOff = PCItemBoxOff;
+    static constexpr std::size_t PCItemBoxPairsOff = PCItemBoxOff + 1;
+    static constexpr int PCItemBoxMaxPairs         = 50;
+    
+
     static constexpr std::size_t MoneyOff         = 0x25F3; // 3 bytes BCD
     static constexpr std::size_t MoneyLen         = 3;
 
@@ -258,6 +277,21 @@ public:
     static const int MapIDNo[256];           // size 256
     static const std::string MapIDHex[256];  // size 256
     static std::string NameFromId(u8 mapId);
+};
+
+// =========================
+// Gen I Item ID lookup (0x00..0xFF)
+// =========================
+// Source: "List of items by index number in Generation I" (Bulbapedia PDF).
+// Unknown/unused/glitch entries should be treated as "INVALID".
+//
+class Gen1ItemLookup {
+public:
+    static const std::string ItemName[256]; // size 256
+    static const int ItemNo[256];           // size 256
+    static const std::string ItemHex[256];  // size 256
+
+    static std::string NameFromId(u8 itemId);
 };
 
 // =========================
