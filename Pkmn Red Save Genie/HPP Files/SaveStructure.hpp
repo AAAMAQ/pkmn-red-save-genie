@@ -252,7 +252,9 @@ public:
     // Invalid/unused entries should be -1.
     static const int PokeDex[256];
 
+    // Methods to find Pokémon and Pokédex from Gen 1 Internal ID
     static std::string NameFromId(u8 speciesId);
+    static std::string DexfromId(u8 speciesId);
 };
 
 // =========================

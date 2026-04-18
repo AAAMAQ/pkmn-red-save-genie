@@ -173,6 +173,7 @@ static bool NameLooksReasonable(const std::string& s) {
 std::string HallOfFamePokemon::ToString() const {
     std::ostringstream oss;
     oss << "Species ID=" << static_cast<int>(speciesId)
+        << " Pokedex ID= " << Gen1SpeciesLookup::DexfromId(speciesId)
         << " Species Name: " << speciesName
         << " Lv " << static_cast<int>(level);
 
@@ -613,7 +614,10 @@ std::string ReadOnlyData::DumpFullSummary() const {
         const BoxStats bs = GetBoxStats(box);
         oss << bs.ToString() << "\n";
     }
-    oss << "\n";
+    
+    oss << "\nNOTE: Gen I also stores a \"Current Box\" cache in Bank 1 (0x30C0..0x3521).\n"
+           "Boxes 1–12 are stored in Banks 2/3, but the currently selected box may appear updated in the Bank 1 cache.\n"
+           "So if something looks \"missing\" or \"outdated\" here, it may be because you are viewing the cached copy vs. the bank copy.\n\n";
     
     
     oss << "--- Bag ---\n";

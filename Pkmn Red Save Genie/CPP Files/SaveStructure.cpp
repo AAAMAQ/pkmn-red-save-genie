@@ -715,6 +715,17 @@ std::string Gen1SpeciesLookup::NameFromId(u8 speciesId) {
     return n;
 }
 
+std::string Gen1SpeciesLookup::DexfromId(u8 speciesId){
+    const std::size_t idx = static_cast<std::size_t>(speciesId);
+    if (idx >= 256) return "INVALID";
+    for(int i = 0; i <256 ; i++){
+       if( Gen1SpeciesLookup::PokeDex[i]==idx)
+           return std::to_string(i);
+    }
+
+    return "INVALID";
+}
+
 
 // =========================================================
 // Gen1ItemLookup
