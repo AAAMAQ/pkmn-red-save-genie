@@ -14,6 +14,7 @@
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
+#include <fstream>
 
 namespace savegenie {
 
@@ -229,6 +230,100 @@ std::string BagSummary::ToString() const {
 }
 
 // =========================================================
+// Pokémon Models (Party + PC Boxes)
+// =========================================================
+
+std::string PokemonMove::ToString() const {
+    std::ostringstream oss;
+    if (!moveName.empty()) {
+        oss << moveName;
+    } else {
+        oss << "MoveID=" << static_cast<int>(moveId);
+    }
+    oss << " (PP " << static_cast<int>(ppCurrent) << "/" << static_cast<int>(ppMax) << ")";
+    return oss.str();
+}
+
+std::string PokemonStats::ToString() const {
+    std::ostringstream oss;
+    // Keep this compact for terminal output.
+    oss << "HP " << hpCurrent << "/" << hpMax
+        << " | ATK " << attack
+        << " | DEF " << defense
+        << " | SPD " << speed
+        << " | SPC " << special
+        << " | Status 0x" << std::hex << std::setw(2) << std::setfill('0')
+        << static_cast<int>(status) << std::dec;
+    return oss.str();
+}
+
+std::string PokemonMon::ToString() const {
+    std::ostringstream oss;
+
+    oss << "[" << position << "] "
+        << (speciesName.empty() ? "UNKNOWN" : speciesName)
+        << " (InternalID=" << static_cast<int>(speciesId);
+
+    if (!dexNo.empty() && dexNo != "INVALID") {
+        oss << " | Dex#" << dexNo;
+    }
+    oss << ")\n";
+
+    oss << "    Nickname: \"" << nickname << "\"\n";
+    oss << "    OT:       \"" << otName << "\" (IDNo: " << otIdNo << ")\n";
+    oss << "    Level:    " << static_cast<int>(level) << "\n";
+    oss << "    EXP:      " << expPoints << "\n";
+
+    // Hidden Gen I values
+    oss << "    DVs:      HP " << static_cast<int>(dvHP)
+        << " | ATK " << static_cast<int>(dvAtk)
+        << " | DEF " << static_cast<int>(dvDef)
+        << " | SPD " << static_cast<int>(dvSpd)
+        << " | SPC " << static_cast<int>(dvSpc) << "\n";
+
+    oss << "    StatExp:  HP " << statExpHP
+        << " | ATK " << statExpAtk
+        << " | DEF " << statExpDef
+        << " | SPD " << statExpSpd
+        << " | SPC " << statExpSpc << "\n";
+
+    // Stats line (HP/stats/status). For box mons, hpCurrent/hpMax/status may be 0.
+    oss << "    Stats:    " << stats.ToString() << "\n";
+
+    if (!moves.empty()) {
+        oss << "    Moves:\n";
+        const std::size_t limit = std::min<std::size_t>(4, moves.size());
+        for (std::size_t i = 0; i < limit; ++i) {
+            oss << "      " << (i + 1) << ") " << moves[i].ToString() << "\n";
+        }
+    }
+
+    return oss.str();
+}
+
+std::string PokemonBox::ToString() const {
+    std::ostringstream oss;
+    oss << "Box " << boxNumber;
+    if (!label.empty()) oss << " (" << label << ")";
+    oss << " - Count: " << pokemonCount << "\n";
+
+    for (const auto& mon : pokemon) {
+        oss << mon.ToString();
+    }
+
+    return oss.str();
+}
+
+std::string PokemonBoxesExport::ToString() const {
+    std::ostringstream oss;
+    oss << "PokemonBoxesExport: " << boxes.size() << " boxes\n";
+    for (const auto& b : boxes) {
+        oss << b.ToString() << "\n";
+    }
+    return oss.str();
+}
+
+// =========================================================
 // ReadOnlyData::GetBagSummary
 // =========================================================
 
@@ -304,6 +399,255 @@ BagSummary ReadOnlyData::GetPCItemBoxSummary(bool includeNamesAndHex) const {
 
         out.items.push_back(std::move(bi));
         off += 2;
+    }
+
+    return out;
+}
+
+// =========================================================
+// Pokémon decode helpers
+// =========================================================
+
+static u16 ReadU16BE_At(const SaveBuffer& b, std::size_t off) {
+    const u8 hi = b.ReadU8(off);
+    const u8 lo = b.ReadU8(off + 1);
+    return static_cast<u16>((hi << 8) | lo);
+}
+
+static u32 ReadU24BE_At(const SaveBuffer& b, std::size_t off) {
+    const u8 hi = b.ReadU8(off);
+    const u8 mid = b.ReadU8(off + 1);
+    const u8 lo = b.ReadU8(off + 2);
+    return static_cast<u32>((hi << 16) | (mid << 8) | lo);
+}
+
+// Decode a Gen I party Pokémon struct (size 0x2C) into a PokemonMon.
+// Layout used here matches the commonly documented Gen I "party mon" struct:
+//  0x00 species
+//  0x01-0x02 current HP (BE)
+//  0x03 level
+//  0x04 status
+//  0x08-0x0B moves (4)
+//  0x1D-0x20 PP (4)
+//  0x22-0x23 max HP (BE)
+//  0x24-0x25 attack
+//  0x26-0x27 defense
+//  0x28-0x29 speed
+//  0x2A-0x2B special
+//  0x0E-0x10 EXP (BE, 3 bytes)
+static void DecodePartyMonStruct(const SaveBuffer& buf, std::size_t monOff, PokemonMon& out) {
+    buf.RequireRange(monOff, Gen1Layout::PartyStructSize);
+
+    out.speciesId = buf.ReadU8(monOff + 0x00);
+
+    out.stats.hpCurrent = ReadU16BE_At(buf, monOff + 0x01);
+    out.level = buf.ReadU8(monOff + 0x21);
+    
+    out.stats.status = buf.ReadU8(monOff + 0x04);
+
+    out.otIdNo = ReadU16BE_At(buf, monOff + 0x0C);
+    out.expPoints = ReadU24BE_At(buf, monOff + 0x0E);
+
+    // Stat Exp (Gen I EV-like values): 5 stats, 2 bytes each.
+    out.statExpHP  = ReadU16BE_At(buf, monOff + 0x11);
+    out.statExpAtk = ReadU16BE_At(buf, monOff + 0x13);
+    out.statExpDef = ReadU16BE_At(buf, monOff + 0x15);
+    out.statExpSpd = ReadU16BE_At(buf, monOff + 0x17);
+    out.statExpSpc = ReadU16BE_At(buf, monOff + 0x19);
+
+    // DVs (Gen I IV-like values): packed at 0x1B..0x1C.
+    const u8 dv1 = buf.ReadU8(monOff + 0x1B);
+    const u8 dv2 = buf.ReadU8(monOff + 0x1C);
+
+    out.dvAtk = static_cast<u8>((dv1 >> 4) & 0x0F);
+    out.dvDef = static_cast<u8>((dv1 >> 0) & 0x0F);
+    out.dvSpd = static_cast<u8>((dv2 >> 4) & 0x0F);
+    out.dvSpc = static_cast<u8>((dv2 >> 0) & 0x0F);
+
+    // HP DV is derived from the low bits of Atk/Def/Spd/Spc.
+    out.dvHP = static_cast<u8>(((out.dvAtk & 1) << 3) | ((out.dvDef & 1) << 2) | ((out.dvSpd & 1) << 1) | ((out.dvSpc & 1) << 0));
+
+    // Moves
+    out.moves.clear();
+    out.moves.reserve(4);
+    for (int i = 0; i < 4; ++i) {
+        PokemonMove mv;
+        mv.moveId = buf.ReadU8(monOff + 0x08 + static_cast<std::size_t>(i));
+        mv.moveName = Gen1MoveLookup::MoveFromId(mv.moveId);
+
+        const u8 rawPP = buf.ReadU8(monOff + 0x1D + static_cast<std::size_t>(i));
+        const u8 ppCur = static_cast<u8>(rawPP & 0x3F);  // lower 6 bits
+        // upper 2 bits are PP Ups used (0..3): (rawPP >> 6)
+
+        mv.ppCurrent = ppCur;
+        mv.ppMax = ppCur; // placeholder until we add base PP table + PP Ups calculation
+
+        out.moves.push_back(std::move(mv));
+    }
+
+    // Stats (max HP + atk/def/spd/spc)
+    // These are stored at the end of the 0x2C party struct; use the +1-shifted offsets.
+    out.stats.hpMax   = ReadU16BE_At(buf, monOff + 0x22);
+    out.stats.attack  = ReadU16BE_At(buf, monOff + 0x24);
+    out.stats.defense = ReadU16BE_At(buf, monOff + 0x26);
+    out.stats.speed   = ReadU16BE_At(buf, monOff + 0x28);
+    out.stats.special = ReadU16BE_At(buf, monOff + 0x2A);
+}
+
+// Decode a Gen I boxed Pokémon struct (size 0x21) into a PokemonMon.
+// This is a truncated form of the party struct and typically does not contain live battle HP/status.
+// We still extract level/exp/moves/PP when available.
+static void DecodeBoxMonStruct(const SaveBuffer& buf, std::size_t monOff, PokemonMon& out) {
+    buf.RequireRange(monOff, Gen1Layout::BoxStructSize);
+
+    out.speciesId = buf.ReadU8(monOff + 0x00);
+
+    // Many tools treat level at +0x03 for boxed mons.
+    out.level = buf.ReadU8(monOff + 0x21);
+    out.otIdNo = ReadU16BE_At(buf, monOff + 0x0C);
+    out.expPoints = ReadU24BE_At(buf, monOff + 0x0E);
+
+    // Stat Exp (Gen I EV-like values): 5 stats, 2 bytes each.
+    out.statExpHP  = ReadU16BE_At(buf, monOff + 0x11);
+    out.statExpAtk = ReadU16BE_At(buf, monOff + 0x13);
+    out.statExpDef = ReadU16BE_At(buf, monOff + 0x15);
+    out.statExpSpd = ReadU16BE_At(buf, monOff + 0x17);
+    out.statExpSpc = ReadU16BE_At(buf, monOff + 0x19);
+
+    // DVs (Gen I IV-like values): packed at 0x1B..0x1C.
+    const u8 dv1 = buf.ReadU8(monOff + 0x1B);
+    const u8 dv2 = buf.ReadU8(monOff + 0x1C);
+
+    out.dvAtk = static_cast<u8>((dv1 >> 4) & 0x0F);
+    out.dvDef = static_cast<u8>((dv1 >> 0) & 0x0F);
+    out.dvSpd = static_cast<u8>((dv2 >> 4) & 0x0F);
+    out.dvSpc = static_cast<u8>((dv2 >> 0) & 0x0F);
+
+    // HP DV is derived from the low bits of Atk/Def/Spd/Spc.
+    out.dvHP = static_cast<u8>(((out.dvAtk & 1) << 3) | ((out.dvDef & 1) << 2) | ((out.dvSpd & 1) << 1) | ((out.dvSpc & 1) << 0));
+
+    // Moves + PP
+    out.moves.clear();
+    out.moves.reserve(4);
+    for (int i = 0; i < 4; ++i) {
+        PokemonMove mv;
+        mv.moveId = buf.ReadU8(monOff + 0x08 + static_cast<std::size_t>(i));
+        mv.moveName = Gen1MoveLookup::MoveFromId(mv.moveId);
+
+        const u8 rawPP = buf.ReadU8(monOff + 0x1D + static_cast<std::size_t>(i));
+        const u8 ppCur = static_cast<u8>(rawPP & 0x3F);  // lower 6 bits
+        // upper 2 bits are PP Ups used (0..3): (rawPP >> 6)
+
+        mv.ppCurrent = ppCur;
+        mv.ppMax = ppCur; // placeholder until we add base PP table + PP Ups calculation
+
+        out.moves.push_back(std::move(mv));
+    }
+
+    // Box structs do not store maxHP/atk/def/spd/spc in the same way; leave 0 for now.
+    out.stats.hpCurrent = 0;
+    out.stats.hpMax = 0;
+    out.stats.status = 0;
+    out.stats.attack = 0;
+    out.stats.defense = 0;
+    out.stats.speed = 0;
+    out.stats.special = 0;
+}
+
+PokemonBox ReadOnlyData::GetPartyAsBox0() const {
+    PokemonBox box;
+    box.boxNumber = 0;
+    box.label = "Party";
+
+    buffer_.RequireRange(Gen1Layout::PartyBase, Gen1Layout::PartyBlockLen);
+
+    const int rawCount = static_cast<int>(buffer_.ReadU8(Gen1Layout::PartyCountOff));
+    box.pokemonCount = std::clamp(rawCount, 0, Gen1Layout::PartyMaxMons);
+
+    for (int i = 0; i < box.pokemonCount; ++i) {
+        PokemonMon mon;
+        mon.position = i + 1;
+
+        // Species list
+        const u8 speciesId = buffer_.ReadU8(Gen1Layout::PartySpeciesOff + static_cast<std::size_t>(i));
+        mon.speciesId = speciesId;
+        mon.speciesName = Gen1SpeciesLookup::NameFromId(speciesId);
+        mon.dexNo = Gen1SpeciesLookup::DexfromId(speciesId);
+
+        // Names
+        mon.otName = Gen1TextCodec::DecodeName(buffer_, Gen1Layout::PartyOTNamesOff + static_cast<std::size_t>(i) * Gen1Layout::Gen1NameLen, Gen1Layout::Gen1NameLen);
+        mon.nickname = Gen1TextCodec::DecodeName(buffer_, Gen1Layout::PartyNicknamesOff + static_cast<std::size_t>(i) * Gen1Layout::Gen1NameLen, Gen1Layout::Gen1NameLen);
+
+        // Struct fields
+        const std::size_t monStructOff = Gen1Layout::PartyStructsOff + static_cast<std::size_t>(i) * Gen1Layout::PartyStructSize;
+        DecodePartyMonStruct(buffer_, monStructOff, mon);
+
+        // Overwrite speciesId from species list (defensive) if struct contains 0.
+        if (mon.speciesId == 0) {
+            mon.speciesId = speciesId;
+            mon.speciesName = Gen1SpeciesLookup::NameFromId(speciesId);
+            mon.dexNo = Gen1SpeciesLookup::DexfromId(speciesId);
+        }
+
+        box.pokemon.push_back(std::move(mon));
+    }
+
+    return box;
+}
+
+PokemonBox ReadOnlyData::GetPCBox(int boxIndex1to12) const {
+    if (boxIndex1to12 < 1 || boxIndex1to12 > 12) {
+        throw std::out_of_range("GetPCBox: box index must be 1..12");
+    }
+
+    PokemonBox box;
+    box.boxNumber = boxIndex1to12;
+    box.label = std::string("PC Box ") + std::to_string(boxIndex1to12);
+
+    const std::size_t base = Gen1Layout::BoxBaseOffsetByIndex1to12(boxIndex1to12);
+    buffer_.RequireRange(base, Gen1Layout::BoxBlockSize);
+
+    const int rawCount = static_cast<int>(buffer_.ReadU8(base + Gen1Layout::BoxCountRel));
+    box.pokemonCount = std::clamp(rawCount, 0, Gen1Layout::BoxMaxMons);
+
+    for (int i = 0; i < box.pokemonCount; ++i) {
+        PokemonMon mon;
+        mon.position = i + 1;
+
+        // Species list in box block.
+        const u8 speciesId = buffer_.ReadU8(base + Gen1Layout::BoxSpeciesRel + static_cast<std::size_t>(i));
+        mon.speciesId = speciesId;
+        mon.speciesName = Gen1SpeciesLookup::NameFromId(speciesId);
+        mon.dexNo = Gen1SpeciesLookup::DexfromId(speciesId);
+
+        // OT and nickname arrays
+        mon.otName = Gen1TextCodec::DecodeName(buffer_, base + Gen1Layout::BoxOTNamesRel + static_cast<std::size_t>(i) * Gen1Layout::Gen1NameLen, Gen1Layout::Gen1NameLen);
+        mon.nickname = Gen1TextCodec::DecodeName(buffer_, base + Gen1Layout::BoxNicknamesRel + static_cast<std::size_t>(i) * Gen1Layout::Gen1NameLen, Gen1Layout::Gen1NameLen);
+
+        // Box struct
+        const std::size_t monStructOff = base + Gen1Layout::BoxStructsRel + static_cast<std::size_t>(i) * Gen1Layout::BoxStructSize;
+        DecodeBoxMonStruct(buffer_, monStructOff, mon);
+
+        // If struct species is 0, keep list species.
+        if (mon.speciesId == 0) {
+            mon.speciesId = speciesId;
+            mon.speciesName = Gen1SpeciesLookup::NameFromId(speciesId);
+            mon.dexNo = Gen1SpeciesLookup::DexfromId(speciesId);
+        }
+
+        box.pokemon.push_back(std::move(mon));
+    }
+
+    return box;
+}
+
+PokemonBoxesExport ReadOnlyData::GetAllBoxesExport() const {
+    PokemonBoxesExport out;
+    out.boxes.reserve(13);
+
+    out.boxes.push_back(GetPartyAsBox0());
+    for (int i = 1; i <= 12; ++i) {
+        out.boxes.push_back(GetPCBox(i));
     }
 
     return out;
@@ -593,6 +937,10 @@ std::string ReadOnlyData::DumpFullSummary() const {
     oss << "Bank2 All Checksum: " << (Gen1Checksum::ValidateBankAll(buffer_, 2) ? "VALID" : "INVALID") << "\n";
     oss << "Bank3 All Checksum: " << (Gen1Checksum::ValidateBankAll(buffer_, 3) ? "VALID" : "INVALID") << "\n";
 
+    // Party
+    oss << "\n--- Pokemon Party Decode (Box 0) ---\n";
+    oss << GetPartyAsBox0().ToString() << "\n";
+    
     // Pokédex
     oss << "--- Pokédex ---\n";
     const PokedexSummary pdx = GetPokedexSummary(true);

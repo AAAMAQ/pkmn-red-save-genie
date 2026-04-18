@@ -138,6 +138,97 @@ public:
 };
 
 // =========================================================
+// Pokémon Models (Party + PC Boxes)
+// =========================================================
+
+class PokemonMove {
+public:
+    u8 moveId = 0;
+    std::string moveName; // optional (add move lookup later)
+
+    u8 ppCurrent = 0;
+    u8 ppMax = 0;
+
+    std::string ToString() const;
+};
+
+class PokemonStats {
+public:
+    // Party-only live data (boxes may not have current HP/status stored the same way)
+    u16 hpCurrent = 0;
+    u16 hpMax = 0;
+
+    u8 status = 0; // raw status byte
+
+    // Core stats
+    u16 attack = 0;
+    u16 defense = 0;
+    u16 speed = 0;
+    u16 special = 0;
+
+    std::string ToString() const;
+};
+
+class PokemonMon {
+public:
+    int position = 0; // 1-based index in party/box
+
+    u16 otIdNo = 0;
+    u8 speciesId = 0;              // Gen I internal species ID
+    std::string speciesName;       // via Gen1SpeciesLookup
+    std::string dexNo;             // via Gen1SpeciesLookup::DexfromId (string for JSON convenience)
+    
+
+    std::string nickname;          // Gen I text decoded
+    std::string otName;            // Gen I text decoded
+
+    u8 level = 0;
+    u32 expPoints = 0;
+
+    // -----------------------------------------------------
+    // Gen I hidden values (not shown on most screens)
+    // -----------------------------------------------------
+
+    // Stat Exp (Gen I EV-like values). 5 stats, 2 bytes each.
+    u16 statExpHP  = 0;
+    u16 statExpAtk = 0;
+    u16 statExpDef = 0;
+    u16 statExpSpd = 0;
+    u16 statExpSpc = 0;
+
+    // DVs (Gen I IV-like values). Each DV is 0..15.
+    // HP DV is derived from the low bits of Atk/Def/Spd/Spc.
+    u8 dvHP  = 0;
+    u8 dvAtk = 0;
+    u8 dvDef = 0;
+    u8 dvSpd = 0;
+    u8 dvSpc = 0;
+
+    PokemonStats stats;
+    std::vector<PokemonMove> moves; // up to 4
+
+    std::string ToString() const;
+};
+
+class PokemonBox {
+public:
+    int boxNumber = 0;          // 0 = party, 1..12 = PC boxes
+    std::string label;          // "Party" or "PC Box N"
+    int pokemonCount = 0;
+
+    std::vector<PokemonMon> pokemon;
+
+    std::string ToString() const;
+};
+
+class PokemonBoxesExport {
+public:
+    std::vector<PokemonBox> boxes; // includes party as box 0
+
+    std::string ToString() const;
+};
+
+// =========================================================
 // Hall of Fame Models (Bank 0)
 // =========================================================
 
@@ -184,6 +275,16 @@ public:
     
     // --- PC Item Box ---
     BagSummary GetPCItemBoxSummary(bool includeNamesAndHex = true) const;
+
+    // --- Pokémon (Party + PC Boxes) ---
+    // Party is returned as "box 0" for export uniformity.
+    PokemonBox GetPartyAsBox0() const;
+
+    // PC Boxes 1..12 (Banks 2/3).
+    PokemonBox GetPCBox(int boxIndex1to12) const;
+
+    // Convenience export: Party (box 0) + Boxes 1..12.
+    PokemonBoxesExport GetAllBoxesExport() const;
 
     // --- Hall of Fame (Bank 0) ---
     // Returns an empty list if Hall of Fame record count is 0.

@@ -197,6 +197,59 @@ public:
     static constexpr std::size_t CoinsOff          = 0x2850;
     static constexpr std::size_t CoinsLen          = 2;
 
+    // =========================================================
+    // Pokémon Party + Boxes
+    // =========================================================
+
+    // --- Party Data (Bank 1) ---
+    // Bulbapedia: Party Data block starts at 0x2F2C, size 0x194.
+    // Layout inside Party block:
+    //  +0x00 (1)  Party count
+    //  +0x01 (6)  Species IDs (party slots 1..6)
+    //  +0x07 (1)  Padding
+    //  +0x08      Party Pokémon structs (6 * 0x2C)
+    //  +0x110     OT names (6 * 0x0B)
+    //  +0x152     Nicknames (6 * 0x0B)
+    static constexpr std::size_t PartyBase         = 0x2F2C;
+    static constexpr std::size_t PartyBlockLen     = 0x0194;
+
+    static constexpr int PartyMaxMons              = 6;
+    static constexpr std::size_t Gen1NameLen       = 0x0B; // 11 bytes (Gen I name fields)
+
+    static constexpr std::size_t PartyCountOff     = PartyBase + 0x00;
+    static constexpr std::size_t PartySpeciesOff   = PartyBase + 0x01; // 6 bytes
+    static constexpr std::size_t PartyStructsOff   = PartyBase + 0x08;
+    static constexpr std::size_t PartyStructSize   = 0x002C; // 44 bytes
+
+    static constexpr std::size_t PartyOTNamesOff   = PartyBase + 0x110;
+    static constexpr std::size_t PartyNicknamesOff = PartyBase + 0x152;
+
+    // --- Current Box Cache (Bank 1) ---
+    // Bulbapedia: "Current Box Data" at 0x30C0 size 0x462.
+    // It uses the same internal layout as a full PC box block.
+    static constexpr std::size_t CurrentBoxCacheOff  = 0x30C0;
+    static constexpr std::size_t CurrentBoxCacheLen  = 0x0462;
+
+    // --- Full Box Data internal layout (relative offsets within a 0x462 box block) ---
+    // Bulbapedia "Full Box Data" (applies to Boxes 1-12 in Banks 2/3 and the Current Box Cache in Bank 1).
+    // Layout:
+    //  +0x00 (1)  Box count
+    //  +0x01 (20) Species IDs (box slots 1..20), followed by 0xFF after last used
+    //  +0x15 (1)  Padding
+    //  +0x16      Boxed Pokémon structs (20 * 0x21)
+    //  +0x2AA     OT names (20 * 0x0B)
+    //  +0x386     Nicknames (20 * 0x0B)
+    static constexpr int BoxMaxMons               = 20;
+
+    static constexpr std::size_t BoxCountRel      = 0x0000;
+    static constexpr std::size_t BoxSpeciesRel    = 0x0001; // 20 bytes
+    static constexpr std::size_t BoxPaddingRel    = 0x0015;
+    static constexpr std::size_t BoxStructsRel    = 0x0016;
+    static constexpr std::size_t BoxStructSize    = 0x0021; // 33 bytes (boxed mon)
+
+    static constexpr std::size_t BoxOTNamesRel    = 0x02AA;
+    static constexpr std::size_t BoxNicknamesRel  = 0x0386;
+
     // --- Checksums (Main bank 1) ---
     // Checksum is stored at 0x3523 and computed over 0x2598..0x3522 inclusive.
     static constexpr std::size_t MainChecksumStart = 0x2598;
@@ -297,6 +350,25 @@ public:
 };
 
 // =========================
+// Gen I Move ID lookup (0x00..0xFF)
+// =========================
+// Source: pret/pokered move constants (indexes for moves and move names).
+// Valid Gen I move IDs are 0x00..0xA5 (NO_MOVE..STRUGGLE).
+// Unknown/unused entries should be treated as "INVALID".
+//
+// NOTE: The actual `MoveName[]` table values should be defined in SaveStructure.cpp
+// (same pattern as Species/Map/Item lookup tables).
+class Gen1MoveLookup {
+public:
+    static const std::string MoveName[256]; // size 256
+    static const int MoveNo[256];           // size 256 (0..255)
+    static const std::string MoveHex[256];  // size 256 ("0x00".."0xFF")
+
+    // Returns move name for an ID, or "INVALID".
+    static std::string MoveFromId(u8 moveId);
+};
+
+// =========================
 // Gen I text codec (minimal; names first)
 // =========================
 class Gen1TextCodec {
@@ -373,4 +445,3 @@ public:
 } // namespace savegenie
 
 #endif /* SaveStructure_hpp */
- 
