@@ -197,6 +197,24 @@ public:
     static constexpr std::size_t PlayerLastStopDirOff  = 0x27D5;
     static constexpr std::size_t PlayerCurDirOff       = 0x27D6;
 
+    static constexpr std::size_t LastMapOff            = 0x2611;
+    static constexpr std::size_t LastMapWidthOff       = 0x2612;
+    static constexpr std::size_t CurMapTilesetOff      = 0x2613;
+    static constexpr std::size_t CurMapHeightOff       = 0x2614;
+    static constexpr std::size_t CurMapWidthOff        = 0x2615;
+    static constexpr std::size_t CurMapDataPtrOff      = 0x2616;
+    static constexpr std::size_t CurMapTextPtrOff      = 0x2618;
+    static constexpr std::size_t CurMapScriptPtrOff    = 0x261A;
+    static constexpr std::size_t CurMapConnectionsOff  = 0x261C;
+    static constexpr std::size_t MapBackgroundTileOff  = 0x2659;
+    static constexpr std::size_t NumberOfWarpsOff      = 0x265A;
+    static constexpr std::size_t DestinationWarpIdOff  = 0x26DB;
+    static constexpr std::size_t NumberOfSignsOff      = 0x275C;
+    static constexpr std::size_t NumberOfSpritesOff    = 0x278D;
+    static constexpr std::size_t CurrentMapHeight2Off  = 0x27D0;
+    static constexpr std::size_t CurrentMapWidth2Off   = 0x27D1;
+    static constexpr std::size_t MapViewVramPtrOff     = 0x27D2;
+
     // World/story support ranges.
     static constexpr std::size_t MissableObjectsOff    = 0x2852;
     static constexpr std::size_t MissableObjectsLen    = 29;     // 228 used flags in Junebug v2
@@ -219,7 +237,13 @@ public:
     static constexpr std::size_t VisitedTownsLen       = 2;
     static constexpr int VisitedTownsUsedBits          = 11;
     static constexpr std::size_t SafariStepsOff        = 0x29B9; // big-endian word
+    static constexpr std::size_t FossilItemOff         = 0x29BB;
+    static constexpr std::size_t FossilMonOff          = 0x29BC;
     static constexpr std::size_t PlayerJumpingYScreenOff = 0x29C0;
+    static constexpr std::size_t LastBlackoutMapOff    = 0x29C5;
+    static constexpr std::size_t SpecialWarpDestinationMapOff = 0x29C6;
+    static constexpr std::size_t DungeonWarpDestinationMapOff = 0x29C9;
+    static constexpr std::size_t WhichDungeonWarpOff   = 0x29CA;
 
     static constexpr std::size_t WorldFlags1Off        = 0x29D4;
     static constexpr std::size_t BattleFlagsOff        = 0x29D9;
@@ -229,9 +253,21 @@ public:
     static constexpr std::size_t FlyFlagsOff           = 0x29DF;
     static constexpr std::size_t EliteFlagsOff         = 0x29E0;
     static constexpr std::size_t DoorWarpFlagsOff      = 0x29E2;
+    static constexpr std::size_t CompletedTradesOff    = 0x29E3;
+    static constexpr std::size_t CompletedTradesLen    = 2;
+    static constexpr std::size_t WarpedFromWarpOff     = 0x29E7;
+    static constexpr std::size_t WarpedFromMapOff      = 0x29E8;
+    static constexpr std::size_t CardKeyDoorYOff       = 0x29EB;
+    static constexpr std::size_t CardKeyDoorXOff       = 0x29EC;
+    static constexpr std::size_t LtSurgeLock1Off       = 0x29EF;
+    static constexpr std::size_t LtSurgeLock2Off       = 0x29F0;
 
     static constexpr std::size_t EventFlagsOff         = 0x29F3;
     static constexpr std::size_t EventFlagsLen         = 0x0140;
+
+    static constexpr std::size_t TrainerHeaderPtrOff   = 0x2CDC;
+    static constexpr std::size_t WrongAnswerOpponentOff = 0x2CE4;
+    static constexpr std::size_t CurMapScriptOff       = 0x2CE5;
 
     static constexpr std::size_t SafariGameOverOff     = 0x2CF2;
     static constexpr std::size_t SafariBallCountOff    = 0x2CF3;

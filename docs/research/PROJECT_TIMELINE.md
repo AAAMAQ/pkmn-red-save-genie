@@ -255,17 +255,31 @@ Milestone: Created:
 
 Technical significance: Establishes a durable documentation base for future contributors, research review, and converter development.
 
+## June 20, 2026 - Gen I Release Foundation Expansion
+
+Evidence: `ReadOnlyData::GetCurrentBoxCache()`, `ReadOnlyData::GetEventCategorySummary()`, `ReadOnlyData::GetWorldStateSummary()`, `tests/savegenie_core_tests.cpp`, `docs/release/GEN1_SAVE_COVERAGE.md`
+
+Milestone: Save Genie expanded from mostly read-only Pokemon/trainer exports into a broader Gen I release foundation:
+
+| Area | Result |
+| --- | --- |
+| Safe Editor MVP | Conservative editor workflow for money, coins, trainer/rival names, badges, and existing item quantities. |
+| Current Box Cache | Bank 1 `0x30C0` cache decoded separately from permanent PC boxes. |
+| Event flags | `pret/pokered` event constants imported as true/false named flags, trainer rows, story categories, static battles, and gym/badge consistency. |
+| World state | Current scripts, missable objects, hidden items, hidden coins, visited towns/Fly destinations, and selected Bank 1 runtime fields decoded read-only with Junebug/Twilight credit. |
+| Tests | Synthetic core tests added for helpers, editor writes, event/world/daycare state, current box cache, and regression-style decoding. |
+
+Technical significance: This moved Phase 3 Gen I completeness substantially forward while keeping risky story/Pokemon/location editing out of scope.
+
 ## Next Planned Milestones
 
 | Order | Milestone | Evidence |
 | --- | --- | --- |
-| 1 | Verify PC box decode. | Project brain and current research finding R-008. |
-| 2 | Add current box cache decode. | Project brain and external analysis. |
-| 3 | Expand compact summary JSON. | Project brain. |
-| 4 | Label Gen I event/trainer flags. | Gears advice and `pret/pokered` source map. |
-| 5 | Implement safe WriteOnlyData MVP. | Current WriteOnlyData partial implementation. |
-| 6 | Create save coverage report. | Project brain roadmap. |
-| 7 | Begin FireRed reader. | Gen III research roadmap. |
-| 8 | Begin FireRed writer. | Gen III research roadmap. |
-| 9 | Integrate Pokemon conversion adapter. | PCCS/Poke Transporter research. |
-| 10 | Build limited whole-save conversion proof. | Long-term converter roadmap. |
+| 1 | Validate PC boxes, current box cache, named world-state rows, and Safe Editor against real saves/save diffs. | Current synthetic tests plus project brain validation method. |
+| 2 | Finish text-codec polish and user-facing validation/error reporting. | Safe Editor and release-readiness roadmap. |
+| 3 | Freeze export schemas, including future `.red.json` direction. | Junebug analysis and converter roadmap. |
+| 4 | Complete README/release documentation and release checklist. | Gen I public release plan. |
+| 5 | Begin FireRed reader. | Gen III research roadmap. |
+| 6 | Begin FireRed writer. | Gen III research roadmap. |
+| 7 | Integrate Pokemon conversion adapter. | PCCS/Poke Transporter research. |
+| 8 | Build limited whole-save conversion proof. | Long-term converter roadmap. |

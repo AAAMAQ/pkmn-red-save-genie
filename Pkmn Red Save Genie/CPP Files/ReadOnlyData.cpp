@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cctype>
 #include <iomanip>
+#include <iterator>
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
@@ -324,6 +325,59 @@ std::string WorldStateSummary::ToString() const {
     printIndices("First Hidden Coin Indices", firstCollectedHiddenCoins);
     printIndices("Visited Town Indices", visitedTownIndices);
     printIndices("First Nonzero Script Byte Indices", nonZeroCurrentScriptIndices);
+
+    if (!currentScripts.empty()) {
+        oss << "Current Scripts (pret/pokered symbol order):\n";
+        for (const auto& script : currentScripts) {
+            oss << "  [" << script.index << "] " << script.name
+                << " @ +0x" << std::uppercase << std::hex << std::setw(2) << std::setfill('0')
+                << script.relativeOffset << std::dec << std::setfill(' ')
+                << " size=" << script.size
+                << " value=" << script.value << "\n";
+        }
+    }
+
+    const auto printNamedBits = [&oss](const char* label, const std::vector<NamedBitState>& values, const char* trueMeaning) {
+        if (values.empty()) return;
+        oss << label << ":\n";
+        for (const auto& item : values) {
+            oss << "  [" << item.index << "] " << item.name;
+            if (!item.location.empty()) {
+                oss << " - " << item.location;
+            }
+            if (item.x >= 0 && item.y >= 0) {
+                oss << " (X=" << item.x << ", Y=" << item.y << ")";
+            }
+            if (item.sprite >= 0) {
+                oss << " sprite=" << item.sprite;
+            }
+            if (!item.defaultState.empty()) {
+                oss << " default=" << item.defaultState;
+            }
+            oss << ": " << (item.isSet ? "true" : "false");
+            if (item.isSet && trueMeaning != nullptr && trueMeaning[0] != '\0') {
+                oss << " (" << trueMeaning << ")";
+            }
+            oss << "\n";
+        }
+    };
+
+    printNamedBits("Missable Objects (true = toggled off/hidden)", missableObjects, "toggled off");
+    printNamedBits("Hidden Items (true = collected)", hiddenItems, "collected");
+    printNamedBits("Hidden Coins (true = collected)", hiddenCoins, "collected");
+    printNamedBits("Visited Towns / Fly Destinations (true = visited)", visitedTowns, "visited");
+
+    if (!runtimeFields.empty()) {
+        oss << "Known Bank 1 Runtime / World Fields:\n";
+        for (const auto& field : runtimeFields) {
+            oss << "  " << field.offsetHex << " " << field.name
+                << " = " << field.value;
+            if (!field.source.empty()) {
+                oss << " [" << field.source << "]";
+            }
+            oss << "\n";
+        }
+    }
 
     oss << "Story/Misc Bits:\n";
     oss << "  Got Old Rod:              " << (gotOldRod ? "yes" : "no") << "\n";
@@ -1779,6 +1833,464 @@ static std::string StoryFlagLabel(const std::string& eventName) {
     return HumanizeEventToken(StripEventPrefix(eventName));
 }
 
+struct WorldScriptLabel {
+    int index;
+    const char* name;
+    int relativeOffset;
+    int size;
+};
+
+struct MissableObjectLabel {
+    int index;
+    const char* name;
+    const char* location;
+    int sprite;
+    const char* defaultState;
+};
+
+struct HiddenItemLabel {
+    int index;
+    const char* location;
+    int x;
+    int y;
+};
+
+struct HiddenCoinLabel {
+    int index;
+    const char* location;
+    int x;
+    int y;
+};
+
+struct VisitedTownLabel {
+    int index;
+    const char* name;
+};
+
+// Source: pret/pokered wram.asm script symbol order, accelerated/cross-checked
+// with junebug12851/pokered-save-editor-2 projects/db/assets/data/scripts.json.
+static constexpr WorldScriptLabel kWorldScriptLabels[] = {
+    {0, "Oaks Lab", 0, 1},
+    {1, "Pallet Town", 1, 1},
+    {2, "Blues House", 3, 1},
+    {3, "Viridian City", 4, 1},
+    {4, "Pewter City", 7, 1},
+    {5, "Route 3", 8, 1},
+    {6, "Route 4", 9, 1},
+    {7, "Viridian Gym", 11, 1},
+    {8, "Pewter Gym", 12, 1},
+    {9, "Cerulean Gym", 13, 1},
+    {10, "Vermilion Gym", 14, 1},
+    {11, "Celadon Gym", 15, 1},
+    {12, "Route 6", 16, 1},
+    {13, "Route 8", 17, 1},
+    {14, "Route 24", 18, 1},
+    {15, "Route 25", 19, 1},
+    {16, "Route 9", 20, 1},
+    {17, "Route 10", 21, 1},
+    {18, "Mt. Moon 1F", 22, 1},
+    {19, "Mt. Moon B2F", 23, 1},
+    {20, "S.S. Anne 1F Rooms", 24, 1},
+    {21, "S.S. Anne 2F Rooms", 25, 1},
+    {22, "Route 22", 26, 1},
+    {23, "Reds House 2F", 28, 1},
+    {24, "Viridian Mart", 29, 1},
+    {25, "Route 22 Gate", 30, 1},
+    {26, "Cerulean City", 31, 1},
+    {27, "S.S. Anne Bow", 39, 1},
+    {28, "Viridian Forest", 40, 1},
+    {29, "Museum 1F", 41, 1},
+    {30, "Route 13", 42, 1},
+    {31, "Route 14", 43, 1},
+    {32, "Route 17", 44, 1},
+    {33, "Route 19", 45, 1},
+    {34, "Route 21", 46, 1},
+    {35, "Safari Zone Gate", 47, 1},
+    {36, "Rock Tunnel B1F", 48, 1},
+    {37, "Rock Tunnel 1F", 49, 1},
+    {38, "Route 11", 51, 1},
+    {39, "Route 12", 52, 1},
+    {40, "Route 15", 53, 1},
+    {41, "Route 16", 54, 1},
+    {42, "Route 18", 55, 1},
+    {43, "Route 20", 56, 1},
+    {44, "S.S. Anne B1F Rooms", 57, 1},
+    {45, "Vermilion City", 58, 1},
+    {46, "Pokemon Tower 2F", 59, 1},
+    {47, "Pokemon Tower 3F", 60, 1},
+    {48, "Pokemon Tower 4F", 61, 1},
+    {49, "Pokemon Tower 5F", 62, 1},
+    {50, "Pokemon Tower 6F", 63, 1},
+    {51, "Pokemon Tower 7F", 64, 1},
+    {52, "Rocket Hideout B1F", 65, 1},
+    {53, "Rocket Hideout B2F", 66, 1},
+    {54, "Rocket Hideout B3F", 67, 1},
+    {55, "Rocket Hideout B4F", 68, 2},
+    {56, "Route 6 Gate", 70, 1},
+    {57, "Route 8 Gate", 71, 2},
+    {58, "Cinnabar Island", 73, 1},
+    {59, "Pokemon Mansion 1F", 74, 2},
+    {60, "Pokemon Mansion 2F", 76, 1},
+    {61, "Pokemon Mansion 3F", 77, 1},
+    {62, "Pokemon Mansion B1F", 78, 1},
+    {63, "Victory Road 2F", 79, 1},
+    {64, "Victory Road 3F", 80, 2},
+    {65, "Fighting Dojo", 82, 1},
+    {66, "Silph Co. 2F", 83, 1},
+    {67, "Silph Co. 3F", 84, 1},
+    {68, "Silph Co. 4F", 85, 1},
+    {69, "Silph Co. 5F", 86, 1},
+    {70, "Silph Co. 6F", 87, 1},
+    {71, "Silph Co. 7F", 88, 1},
+    {72, "Silph Co. 8F", 89, 1},
+    {73, "Silph Co. 9F", 90, 1},
+    {74, "Hall of Fame", 91, 1},
+    {75, "Champions Room", 92, 1},
+    {76, "Loreleis Room", 93, 1},
+    {77, "Brunos Room", 94, 1},
+    {78, "Agathas Room", 95, 1},
+    {79, "Cerulean Cave B1F", 96, 1},
+    {80, "Victory Road 1F", 97, 1},
+    {81, "Lances Room", 99, 1},
+    {82, "Silph Co. 10F", 104, 1},
+    {83, "Silph Co. 11F", 105, 1},
+    {84, "Fuchsia Gym", 107, 1},
+    {85, "Saffron Gym", 108, 1},
+    {86, "Cinnabar Gym", 110, 1},
+    {87, "Game Corner", 111, 1},
+    {88, "Route 16 Gate", 112, 1},
+    {89, "Bills House", 113, 1},
+    {90, "Route 5 Gate", 114, 1},
+    {91, "Power Plant / Route 7 Gate", 115, 1},
+    {92, "S.S. Anne 2F", 117, 1},
+    {93, "Seafoam Islands B3F", 118, 1},
+    {94, "Route 23", 119, 1},
+    {95, "Seafoam Islands B4F", 120, 1},
+    {96, "Route 18 Gate 1F", 121, 1},
+};
+
+// Source: junebug12851/pokered-save-editor-2 missables DB, cross-checked with
+// pret/pokered wToggleableObjectFlags count/order. Bit set = object toggled off.
+static constexpr MissableObjectLabel kMissableObjectLabels[] = {
+    {0, "Prof. Oak", "Pallet Town", 0, "Hide"},
+    {1, "Lying Old Man", "Viridian City", 4, "Show"},
+    {2, "Standing Old Man", "Viridian City", 6, "Hide"},
+    {3, "Museum Guy", "Pewter City", 2, "Show"},
+    {4, "Gym Guy", "Pewter City", 4, "Show"},
+    {5, "Rival", "Cerulean City", 0, "Hide"},
+    {6, "Rocket", "Cerulean City", 1, "Show"},
+    {7, "Guard 1", "Cerulean City", 5, "Hide"},
+    {8, "Cave Guy", "Cerulean City", 9, "Show"},
+    {9, "Guard 2", "Cerulean City", 10, "Show"},
+    {10, "Saffron Gate Guard 1", "Saffron City", 0, "Show"},
+    {11, "Saffron Gate Guard 2", "Saffron City", 1, "Show"},
+    {12, "Saffron Gate Guard 3", "Saffron City", 2, "Show"},
+    {13, "Saffron Gate Guard 4", "Saffron City", 3, "Show"},
+    {14, "Saffron NPC 5", "Saffron City", 4, "Show"},
+    {15, "Saffron NPC 6", "Saffron City", 5, "Show"},
+    {16, "Saffron NPC 7", "Saffron City", 6, "Show"},
+    {17, "Saffron NPC 8", "Saffron City", 7, "Hide"},
+    {18, "Saffron NPC 9", "Saffron City", 8, "Hide"},
+    {19, "Saffron NPC A", "Saffron City", 9, "Hide"},
+    {20, "Saffron NPC B", "Saffron City", 10, "Hide"},
+    {21, "Saffron NPC C", "Saffron City", 11, "Hide"},
+    {22, "Saffron NPC D", "Saffron City", 12, "Hide"},
+    {23, "Saffron NPC E", "Saffron City", 13, "Show"},
+    {24, "Saffron NPC F", "Saffron City", 14, "Hide"},
+    {25, "Route 2 Item 1", "Route 2", 0, "Show"},
+    {26, "Route 2 Item 2", "Route 2", 1, "Show"},
+    {27, "Item", "Route 4", 2, "Show"},
+    {28, "Item", "Route 9", 9, "Show"},
+    {29, "Snorlax", "Route 12", 0, "Show"},
+    {30, "Item 1", "Route 12", 8, "Show"},
+    {31, "Item 2", "Route 12", 9, "Show"},
+    {32, "Item", "Route 15", 10, "Show"},
+    {33, "Snorlax", "Route 16", 6, "Show"},
+    {34, "Rival 1", "Route 22", 0, "Hide"},
+    {35, "Rival 2", "Route 22", 1, "Hide"},
+    {36, "Nugget Bridge Guy", "Route 24", 0, "Show"},
+    {37, "Item", "Route 24", 7, "Show"},
+    {38, "Item", "Route 25", 9, "Show"},
+    {39, "Daisy Sitting", "Blues House", 0, "Show"},
+    {40, "Daisy Walking", "Blues House", 1, "Hide"},
+    {41, "Town Map", "Blues House", 2, "Show"},
+    {42, "Rival", "Oaks Lab", 0, "Show"},
+    {43, "Pokeball 1", "Oaks Lab", 1, "Show"},
+    {44, "Pokeball 2", "Oaks Lab", 2, "Show"},
+    {45, "Pokeball 3", "Oaks Lab", 3, "Show"},
+    {46, "Prof. Oak 1", "Oaks Lab", 4, "Hide"},
+    {47, "Pokedex 1", "Oaks Lab", 5, "Show"},
+    {48, "Pokedex 2", "Oaks Lab", 6, "Show"},
+    {49, "Prof. Oak 2", "Oaks Lab", 7, "Hide"},
+    {50, "Giovanni", "Viridian Gym", 0, "Show"},
+    {51, "Item", "Viridian Gym", 10, "Show"},
+    {52, "Old Amber", "Museum 1F", 4, "Show"},
+    {53, "Item 1", "Cerulean Cave 1F", 0, "Show"},
+    {54, "Item 2", "Cerulean Cave 1F", 1, "Show"},
+    {55, "Item 3", "Cerulean Cave 1F", 2, "Show"},
+    {56, "Rival", "Pokemon Tower 2F", 0, "Show"},
+    {57, "Item", "Pokemon Tower 3F", 3, "Show"},
+    {58, "Item 1", "Pokemon Tower 4F", 3, "Show"},
+    {59, "Item 2", "Pokemon Tower 4F", 4, "Show"},
+    {60, "Item 3", "Pokemon Tower 4F", 5, "Show"},
+    {61, "Item", "Pokemon Tower 5F", 5, "Show"},
+    {62, "Item 1", "Pokemon Tower 6F", 3, "Show"},
+    {63, "Item 2", "Pokemon Tower 6F", 4, "Show"},
+    {64, "Rocket 1", "Pokemon Tower 7F", 0, "Show"},
+    {65, "Rocket 2", "Pokemon Tower 7F", 1, "Show"},
+    {66, "Rocket 3", "Pokemon Tower 7F", 2, "Show"},
+    {67, "Mr Fuji", "Pokemon Tower 7F", 3, "Show"},
+    {68, "Mr Fuji", "Mr Fujis House", 4, "Hide"},
+    {69, "Eevee Gift", "Celadon Mansion Roof House", 1, "Show"},
+    {70, "Rocket", "Game Corner", 10, "Show"},
+    {71, "Item", "Wardens House", 1, "Show"},
+    {72, "Item 1", "Pokemon Mansion 1F", 1, "Show"},
+    {73, "Item 2", "Pokemon Mansion 1F", 2, "Show"},
+    {74, "Hitmonlee Gift", "Fighting Dojo", 5, "Show"},
+    {75, "Hitmonchan Gift", "Fighting Dojo", 6, "Show"},
+    {76, "Receptionist", "Silph Co. 1F", 0, "Hide"},
+    {77, "Voltorb 1", "Power Plant", 0, "Show"},
+    {78, "Voltorb 2", "Power Plant", 1, "Show"},
+    {79, "Voltorb 3", "Power Plant", 2, "Show"},
+    {80, "Electrode 1", "Power Plant", 3, "Show"},
+    {81, "Voltorb 4", "Power Plant", 4, "Show"},
+    {82, "Voltorb 5", "Power Plant", 5, "Show"},
+    {83, "Electrode 2", "Power Plant", 6, "Show"},
+    {84, "Voltorb 6", "Power Plant", 7, "Show"},
+    {85, "Zapdos", "Power Plant", 8, "Show"},
+    {86, "Item 1", "Power Plant", 9, "Show"},
+    {87, "Item 2", "Power Plant", 10, "Show"},
+    {88, "Item 3", "Power Plant", 11, "Show"},
+    {89, "Item 4", "Power Plant", 12, "Show"},
+    {90, "Item 5", "Power Plant", 13, "Show"},
+    {91, "Moltres", "Victory Road 2F", 5, "Show"},
+    {92, "Item 1", "Victory Road 2F", 6, "Show"},
+    {93, "Item 2", "Victory Road 2F", 7, "Show"},
+    {94, "Item 3", "Victory Road 2F", 8, "Show"},
+    {95, "Item 4", "Victory Road 2F", 9, "Show"},
+    {96, "Boulder", "Victory Road 2F", 12, "Show"},
+    {97, "Bill as Pokemon", "Bills House", 0, "Show"},
+    {98, "Bill 1", "Bills House", 1, "Hide"},
+    {99, "Bill 2", "Bills House", 2, "Hide"},
+    {100, "Item 1", "Viridian Forest", 4, "Show"},
+    {101, "Item 2", "Viridian Forest", 5, "Show"},
+    {102, "Item 3", "Viridian Forest", 6, "Show"},
+    {103, "Item 1", "Mt Moon 1F", 7, "Show"},
+    {104, "Item 2", "Mt Moon 1F", 8, "Show"},
+    {105, "Item 3", "Mt Moon 1F", 9, "Show"},
+    {106, "Item 4", "Mt Moon 1F", 10, "Show"},
+    {107, "Item 5", "Mt Moon 1F", 11, "Show"},
+    {108, "Item 6", "Mt Moon 1F", 12, "Show"},
+    {109, "Fossil 1", "Mt Moon B2F", 5, "Show"},
+    {110, "Fossil 2", "Mt Moon B2F", 6, "Show"},
+    {111, "Item 1", "Mt Moon B2F", 7, "Show"},
+    {112, "Item 2", "Mt Moon B2F", 8, "Show"},
+    {113, "Rival", "S.S. Anne 2F", 1, "Hide"},
+    {114, "Rooms Item", "S.S. Anne 1F Rooms", 9, "Show"},
+    {115, "Rooms Item 1", "S.S. Anne 2F Rooms", 5, "Show"},
+    {116, "Rooms Item 2", "S.S. Anne 2F Rooms", 8, "Show"},
+    {117, "Rooms Item 1", "S.S. Anne B1F Rooms", 8, "Show"},
+    {118, "Rooms Item 2", "S.S. Anne B1F Rooms", 9, "Show"},
+    {119, "Rooms Item 3", "S.S. Anne B1F Rooms", 10, "Show"},
+    {120, "Item 1", "Victory Road 3F", 4, "Show"},
+    {121, "Item 2", "Victory Road 3F", 5, "Show"},
+    {122, "Boulder", "Victory Road 3F", 9, "Show"},
+    {123, "Item 1", "Rocket Hideout B1F", 5, "Show"},
+    {124, "Item 2", "Rocket Hideout B1F", 6, "Show"},
+    {125, "Item 1", "Rocket Hideout B2F", 1, "Show"},
+    {126, "Item 2", "Rocket Hideout B2F", 2, "Show"},
+    {127, "Item 3", "Rocket Hideout B2F", 3, "Show"},
+    {128, "Item 4", "Rocket Hideout B2F", 4, "Show"},
+    {129, "Item 1", "Rocket Hideout B3F", 2, "Show"},
+    {130, "Item 2", "Rocket Hideout B3F", 3, "Show"},
+    {131, "Giovanni", "Rocket Hideout B4F", 0, "Show"},
+    {132, "Item 1", "Rocket Hideout B4F", 4, "Show"},
+    {133, "Item 2", "Rocket Hideout B4F", 5, "Show"},
+    {134, "Item 3", "Rocket Hideout B4F", 6, "Show"},
+    {135, "Item 4", "Rocket Hideout B4F", 7, "Hide"},
+    {136, "Item 5", "Rocket Hideout B4F", 8, "Hide"},
+    {137, "Trainer 1", "Silph Co. 2F", 0, "Show"},
+    {138, "Trainer 2", "Silph Co. 2F", 1, "Show"},
+    {139, "Trainer 3", "Silph Co. 2F", 2, "Show"},
+    {140, "Trainer 4", "Silph Co. 2F", 3, "Show"},
+    {141, "Trainer 5", "Silph Co. 2F", 4, "Show"},
+    {142, "Trainer 1", "Silph Co. 3F", 1, "Show"},
+    {143, "Trainer 2", "Silph Co. 3F", 2, "Show"},
+    {144, "Item", "Silph Co. 3F", 3, "Show"},
+    {145, "Trainer 1", "Silph Co. 4F", 1, "Show"},
+    {146, "Trainer 2", "Silph Co. 4F", 2, "Show"},
+    {147, "Trainer 3", "Silph Co. 4F", 3, "Show"},
+    {148, "Item 1", "Silph Co. 4F", 4, "Show"},
+    {149, "Item 2", "Silph Co. 4F", 5, "Show"},
+    {150, "Item 3", "Silph Co. 4F", 6, "Show"},
+    {151, "Trainer 1", "Silph Co. 5F", 1, "Show"},
+    {152, "Trainer 2", "Silph Co. 5F", 2, "Show"},
+    {153, "Trainer 3", "Silph Co. 5F", 3, "Show"},
+    {154, "Trainer 4", "Silph Co. 5F", 4, "Show"},
+    {155, "Item 1", "Silph Co. 5F", 5, "Show"},
+    {156, "Item 2", "Silph Co. 5F", 6, "Show"},
+    {157, "Item 3", "Silph Co. 5F", 7, "Show"},
+    {158, "Trainer 1", "Silph Co. 6F", 5, "Show"},
+    {159, "Trainer 2", "Silph Co. 6F", 6, "Show"},
+    {160, "Trainer 3", "Silph Co. 6F", 7, "Show"},
+    {161, "Item 1", "Silph Co. 6F", 8, "Show"},
+    {162, "Item 2", "Silph Co. 6F", 9, "Show"},
+    {163, "Trainer 1", "Silph Co. 7F", 4, "Show"},
+    {164, "Trainer 2", "Silph Co. 7F", 5, "Show"},
+    {165, "Trainer 3", "Silph Co. 7F", 6, "Show"},
+    {166, "Trainer 4", "Silph Co. 7F", 7, "Show"},
+    {167, "Rival", "Silph Co. 7F", 8, "Show"},
+    {168, "Item 1", "Silph Co. 7F", 9, "Show"},
+    {169, "Item 2", "Silph Co. 7F", 10, "Show"},
+    {170, "Trainer 8", "Silph Co. 7F", 11, "Show"},
+    {171, "Trainer 1", "Silph Co. 8F", 1, "Show"},
+    {172, "Trainer 2", "Silph Co. 8F", 2, "Show"},
+    {173, "Trainer 3", "Silph Co. 8F", 3, "Show"},
+    {174, "Trainer 1", "Silph Co. 9F", 1, "Show"},
+    {175, "Trainer 2", "Silph Co. 9F", 2, "Show"},
+    {176, "Trainer 3", "Silph Co. 9F", 3, "Show"},
+    {177, "Trainer 1", "Silph Co. 10F", 0, "Show"},
+    {178, "Trainer 2", "Silph Co. 10F", 1, "Show"},
+    {179, "Trainer 3", "Silph Co. 10F", 2, "Show"},
+    {180, "Item 1", "Silph Co. 10F", 3, "Show"},
+    {181, "Item 2", "Silph Co. 10F", 4, "Show"},
+    {182, "Item 3", "Silph Co. 10F", 5, "Show"},
+    {183, "Trainer 1", "Silph Co. 11F", 2, "Show"},
+    {184, "Trainer 2", "Silph Co. 11F", 3, "Show"},
+    {185, "Trainer 3", "Silph Co. 11F", 4, "Show"},
+    {186, "Unused Map F4 NPC", "Unused Map F4", 1, "Show"},
+    {187, "Item", "Pokemon Mansion 2F", 1, "Show"},
+    {188, "Item 1", "Pokemon Mansion 3F", 2, "Show"},
+    {189, "Item 2", "Pokemon Mansion 3F", 3, "Show"},
+    {190, "Item 1", "Pokemon Mansion B1F", 2, "Show"},
+    {191, "Item 2", "Pokemon Mansion B1F", 3, "Show"},
+    {192, "Item 3", "Pokemon Mansion B1F", 4, "Show"},
+    {193, "Item 4", "Pokemon Mansion B1F", 5, "Show"},
+    {194, "Item 5", "Pokemon Mansion B1F", 7, "Show"},
+    {195, "Item 1", "Safari Zone East", 0, "Show"},
+    {196, "Item 2", "Safari Zone East", 1, "Show"},
+    {197, "Item 3", "Safari Zone East", 2, "Show"},
+    {198, "Item 4", "Safari Zone East", 3, "Show"},
+    {199, "Item 1", "Safari Zone North", 0, "Show"},
+    {200, "Item 2", "Safari Zone North", 1, "Show"},
+    {201, "Item 1", "Safari Zone West", 0, "Show"},
+    {202, "Item 2", "Safari Zone West", 1, "Show"},
+    {203, "Item 3", "Safari Zone West", 2, "Show"},
+    {204, "Item 4", "Safari Zone West", 3, "Show"},
+    {205, "Item", "Safari Zone Center", 0, "Show"},
+    {206, "Item 1", "Cerulean Cave 2F", 0, "Show"},
+    {207, "Item 2", "Cerulean Cave 2F", 1, "Show"},
+    {208, "Item 3", "Cerulean Cave 2F", 2, "Show"},
+    {209, "Mewtwo", "Cerulean Cave B1F", 0, "Show"},
+    {210, "Item 1", "Cerulean Cave B1F", 1, "Show"},
+    {211, "Item 2", "Cerulean Cave B1F", 2, "Show"},
+    {212, "Item 1", "Victory Road 1F", 2, "Show"},
+    {213, "Item 2", "Victory Road 1F", 3, "Show"},
+    {214, "Champions Room Oak", "Champions Room", 1, "Hide"},
+    {215, "Boulder 1", "Seafoam Islands 1F", 0, "Show"},
+    {216, "Boulder 2", "Seafoam Islands 1F", 1, "Show"},
+    {217, "Boulder 1", "Seafoam Islands B1F", 0, "Hide"},
+    {218, "Boulder 2", "Seafoam Islands B1F", 1, "Hide"},
+    {219, "Boulder 1", "Seafoam Islands B2F", 0, "Hide"},
+    {220, "Boulder 2", "Seafoam Islands B2F", 1, "Hide"},
+    {221, "Boulder 1", "Seafoam Islands B3F", 1, "Show"},
+    {222, "Boulder 2", "Seafoam Islands B3F", 2, "Show"},
+    {223, "Boulder 3", "Seafoam Islands B3F", 4, "Hide"},
+    {224, "Boulder 4", "Seafoam Islands B3F", 5, "Hide"},
+    {225, "Boulder 1", "Seafoam Islands B4F", 0, "Hide"},
+    {226, "Boulder 2", "Seafoam Islands B4F", 1, "Hide"},
+    {227, "Articuno", "Seafoam Islands B4F", 2, "Show"},
+};
+
+// Source: pret/pokered data/events/hidden_item_coords.asm.
+static constexpr HiddenItemLabel kHiddenItemLabels[] = {
+    {0, "Viridian Forest", 1, 18},
+    {1, "Viridian Forest", 16, 42},
+    {2, "Mt. Moon B2F", 18, 12},
+    {3, "Route 25", 38, 3},
+    {4, "Route 9", 14, 7},
+    {5, "S.S. Anne Kitchen", 13, 9},
+    {6, "S.S. Anne B1F Rooms", 3, 1},
+    {7, "Route 10", 9, 17},
+    {8, "Route 10", 16, 53},
+    {9, "Rocket Hideout B1F", 21, 15},
+    {10, "Rocket Hideout B3F", 27, 17},
+    {11, "Rocket Hideout B4F", 25, 1},
+    {12, "Pokemon Tower 5F", 4, 12},
+    {13, "Route 13", 1, 14},
+    {14, "Route 13", 16, 13},
+    {15, "Pokemon Mansion B1F", 1, 9},
+    {16, "Safari Zone Gate", 10, 1},
+    {17, "Safari Zone West", 6, 5},
+    {18, "Silph Co. 5F", 12, 3},
+    {19, "Silph Co. 9F", 2, 15},
+    {20, "Copycats House 2F", 1, 1},
+    {21, "Cerulean Cave 1F", 14, 11},
+    {22, "Cerulean Cave B1F", 27, 3},
+    {23, "Power Plant", 17, 16},
+    {24, "Power Plant", 12, 1},
+    {25, "Seafoam Islands B2F", 15, 15},
+    {26, "Seafoam Islands B4F", 25, 17},
+    {27, "Pokemon Mansion 1F", 8, 16},
+    {28, "Pokemon Mansion 3F", 1, 9},
+    {29, "Route 23", 9, 44},
+    {30, "Route 23", 19, 70},
+    {31, "Route 23", 8, 90},
+    {32, "Victory Road 2F", 5, 2},
+    {33, "Victory Road 2F", 26, 7},
+    {34, "Unused Map 6F", 14, 11},
+    {35, "Viridian City", 14, 4},
+    {36, "Route 11", 48, 5},
+    {37, "Route 12", 2, 63},
+    {38, "Route 17", 15, 14},
+    {39, "Route 17", 8, 45},
+    {40, "Route 17", 17, 72},
+    {41, "Route 17", 4, 91},
+    {42, "Route 17", 8, 121},
+    {43, "Underground Path North/South", 3, 4},
+    {44, "Underground Path North/South", 4, 34},
+    {45, "Underground Path West/East", 12, 2},
+    {46, "Underground Path West/East", 21, 5},
+    {47, "Celadon City", 48, 15},
+    {48, "Route 25", 10, 1},
+    {49, "Mt. Moon B2F", 33, 9},
+    {50, "Seafoam Islands B3F", 9, 16},
+    {51, "Vermilion City", 14, 11},
+    {52, "Cerulean City", 15, 8},
+    {53, "Route 4", 40, 3},
+};
+
+// Source: pret/pokered data/events/hidden_coins.asm.
+static constexpr HiddenCoinLabel kHiddenCoinLabels[] = {
+    {0, "Game Corner", 0, 8},
+    {1, "Game Corner", 1, 16},
+    {2, "Game Corner", 3, 11},
+    {3, "Game Corner", 3, 14},
+    {4, "Game Corner", 4, 12},
+    {5, "Game Corner", 9, 12},
+    {6, "Game Corner", 9, 15},
+    {7, "Game Corner", 16, 14},
+    {8, "Game Corner", 10, 16},
+    {9, "Game Corner", 11, 7},
+    {10, "Game Corner", 15, 8},
+    {11, "Game Corner", 12, 15},
+};
+
+// Source: pret/pokered NUM_CITY_MAPS + map order, cross-checked with Junebug v2.
+static constexpr VisitedTownLabel kVisitedTownLabels[] = {
+    {0, "Pallet Town"},
+    {1, "Viridian City"},
+    {2, "Pewter City"},
+    {3, "Cerulean City"},
+    {4, "Lavender Town"},
+    {5, "Vermilion City"},
+    {6, "Celadon City"},
+    {7, "Fuchsia City"},
+    {8, "Cinnabar Island"},
+    {9, "Indigo Plateau"},
+    {10, "Saffron City"},
+};
+
 static int CountUsedBits(
     const SaveBuffer& buffer,
     std::size_t byteOff,
@@ -1805,6 +2317,80 @@ static int CountUsedBits(
     }
 
     return total;
+}
+
+static std::string HexNumber(std::size_t value, int width) {
+    std::ostringstream oss;
+    oss << "0x" << std::uppercase << std::hex
+        << std::setw(width) << std::setfill('0') << value
+        << std::dec << std::setfill(' ');
+    return oss.str();
+}
+
+static u16 ReadU16BEFromBuffer(const SaveBuffer& buffer, std::size_t off) {
+    return static_cast<u16>((static_cast<u16>(buffer.ReadU8(off)) << 8) |
+                            static_cast<u16>(buffer.ReadU8(off + 1)));
+}
+
+static std::string BoolText(bool value) {
+    return value ? "true" : "false";
+}
+
+static std::string ByteValue(const SaveBuffer& buffer, std::size_t off) {
+    const u8 value = buffer.ReadU8(off);
+    std::ostringstream oss;
+    oss << static_cast<int>(value) << " (" << HexNumber(value, 2) << ")";
+    return oss.str();
+}
+
+static std::string WordLEValue(const SaveBuffer& buffer, std::size_t off) {
+    const u16 value = buffer.ReadU16LE(off);
+    std::ostringstream oss;
+    oss << value << " (" << HexNumber(value, 4) << ")";
+    return oss.str();
+}
+
+static std::string TwoByteBitfieldValue(const SaveBuffer& buffer, std::size_t off, int usedBits) {
+    int setCount = 0;
+    for (int bitIndex = 0; bitIndex < usedBits; ++bitIndex) {
+        if (buffer.GetBit(off + static_cast<std::size_t>(bitIndex / 8), static_cast<u8>(bitIndex % 8))) {
+            ++setCount;
+        }
+    }
+
+    std::ostringstream oss;
+    oss << "bytes " << HexNumber(buffer.ReadU8(off), 2)
+        << " " << HexNumber(buffer.ReadU8(off + 1), 2)
+        << "; " << setCount << " / " << usedBits << " flags set";
+    return oss.str();
+}
+
+static std::string MapValue(u8 mapId) {
+    std::ostringstream oss;
+    oss << static_cast<int>(mapId);
+    if (mapId < 0xF8) {
+        oss << " (" << Gen1MapLookup::MapIDName[static_cast<std::size_t>(mapId)] << ")";
+    } else if (mapId == 0xFF) {
+        oss << " (none / 0xFF)";
+    } else {
+        oss << " (special / " << HexNumber(mapId, 2) << ")";
+    }
+    return oss.str();
+}
+
+static void AddRuntimeField(
+    WorldStateSummary& out,
+    std::size_t off,
+    const std::string& name,
+    const std::string& value,
+    const std::string& source = "pret/pokered wram.asm"
+) {
+    WorldStateSummary::RuntimeField field;
+    field.offsetHex = HexNumber(off, 4);
+    field.name = name;
+    field.value = value;
+    field.source = source;
+    out.runtimeFields.push_back(field);
 }
 
 } // namespace
@@ -2023,6 +2609,20 @@ WorldStateSummary ReadOnlyData::GetWorldStateSummary() const {
         Gen1Layout::MissableObjectsUsedBits,
         &out.firstSetMissableObjects
     );
+    out.missableObjects.reserve(std::size(kMissableObjectLabels));
+    for (const auto& label : kMissableObjectLabels) {
+        WorldStateSummary::NamedBitState state;
+        state.index = label.index;
+        state.name = label.name;
+        state.location = label.location;
+        state.sprite = label.sprite;
+        state.defaultState = label.defaultState;
+        state.isSet = buffer_.GetBit(
+            Gen1Layout::MissableObjectsOff + static_cast<std::size_t>(label.index / 8),
+            static_cast<u8>(label.index % 8)
+        );
+        out.missableObjects.push_back(state);
+    }
 
     out.hiddenItemsChecked = Gen1Layout::HiddenItemsUsedBits;
     out.hiddenItemsCollected = CountUsedBits(
@@ -2031,6 +2631,20 @@ WorldStateSummary ReadOnlyData::GetWorldStateSummary() const {
         Gen1Layout::HiddenItemsUsedBits,
         &out.firstCollectedHiddenItems
     );
+    out.hiddenItems.reserve(std::size(kHiddenItemLabels));
+    for (const auto& label : kHiddenItemLabels) {
+        WorldStateSummary::NamedBitState state;
+        state.index = label.index;
+        state.name = "Hidden item";
+        state.location = label.location;
+        state.x = label.x;
+        state.y = label.y;
+        state.isSet = buffer_.GetBit(
+            Gen1Layout::HiddenItemsOff + static_cast<std::size_t>(label.index / 8),
+            static_cast<u8>(label.index % 8)
+        );
+        out.hiddenItems.push_back(state);
+    }
 
     out.hiddenCoinsChecked = Gen1Layout::HiddenCoinsUsedBits;
     out.hiddenCoinsCollected = CountUsedBits(
@@ -2039,6 +2653,20 @@ WorldStateSummary ReadOnlyData::GetWorldStateSummary() const {
         Gen1Layout::HiddenCoinsUsedBits,
         &out.firstCollectedHiddenCoins
     );
+    out.hiddenCoins.reserve(std::size(kHiddenCoinLabels));
+    for (const auto& label : kHiddenCoinLabels) {
+        WorldStateSummary::NamedBitState state;
+        state.index = label.index;
+        state.name = "Hidden coins";
+        state.location = label.location;
+        state.x = label.x;
+        state.y = label.y;
+        state.isSet = buffer_.GetBit(
+            Gen1Layout::HiddenCoinsOff + static_cast<std::size_t>(label.index / 8),
+            static_cast<u8>(label.index % 8)
+        );
+        out.hiddenCoins.push_back(state);
+    }
 
     out.visitedTownsChecked = Gen1Layout::VisitedTownsUsedBits;
     out.visitedTownsSet = CountUsedBits(
@@ -2048,6 +2676,18 @@ WorldStateSummary ReadOnlyData::GetWorldStateSummary() const {
         &out.visitedTownIndices,
         Gen1Layout::VisitedTownsUsedBits
     );
+    out.visitedTowns.reserve(std::size(kVisitedTownLabels));
+    for (const auto& label : kVisitedTownLabels) {
+        WorldStateSummary::NamedBitState state;
+        state.index = label.index;
+        state.name = label.name;
+        state.location = "Fly destination";
+        state.isSet = buffer_.GetBit(
+            Gen1Layout::VisitedTownsOff + static_cast<std::size_t>(label.index / 8),
+            static_cast<u8>(label.index % 8)
+        );
+        out.visitedTowns.push_back(state);
+    }
 
     buffer_.RequireRange(Gen1Layout::CurrentScriptsOff, Gen1Layout::CurrentScriptsLen);
     out.currentScriptsChecked = static_cast<int>(Gen1Layout::CurrentScriptsLen);
@@ -2059,6 +2699,21 @@ WorldStateSummary ReadOnlyData::GetWorldStateSummary() const {
             }
         }
     }
+    out.currentScripts.reserve(std::size(kWorldScriptLabels));
+    for (const auto& label : kWorldScriptLabels) {
+        WorldStateSummary::CurrentScriptState state;
+        state.index = label.index;
+        state.name = label.name;
+        state.relativeOffset = label.relativeOffset;
+        state.size = label.size;
+        const std::size_t off = Gen1Layout::CurrentScriptsOff + static_cast<std::size_t>(label.relativeOffset);
+        if (label.size == 2) {
+            state.value = static_cast<int>(ReadU16BEFromBuffer(buffer_, off));
+        } else {
+            state.value = static_cast<int>(buffer_.ReadU8(off));
+        }
+        out.currentScripts.push_back(state);
+    }
 
     out.gotOldRod = buffer_.GetBit(Gen1Layout::WorldFlags1Off, 3);
     out.gotGoodRod = buffer_.GetBit(Gen1Layout::WorldFlags1Off, 4);
@@ -2069,6 +2724,87 @@ WorldStateSummary ReadOnlyData::GetWorldStateSummary() const {
     out.everHealedPokemon = buffer_.GetBit(Gen1Layout::WorldFlags2Off, 2);
     out.gotStarter = buffer_.GetBit(Gen1Layout::WorldFlags2Off, 3);
     out.defeatedLorelei = buffer_.GetBit(Gen1Layout::EliteFlagsOff, 1);
+
+    AddRuntimeField(out, Gen1Layout::LastMapOff, "wLastMap", MapValue(buffer_.ReadU8(Gen1Layout::LastMapOff)));
+    AddRuntimeField(out, Gen1Layout::LastMapWidthOff, "wUnusedLastMapWidth", ByteValue(buffer_, Gen1Layout::LastMapWidthOff));
+    AddRuntimeField(out, Gen1Layout::CurMapTilesetOff, "wCurMapTileset", ByteValue(buffer_, Gen1Layout::CurMapTilesetOff));
+    AddRuntimeField(out, Gen1Layout::CurMapHeightOff, "wCurMapHeight", ByteValue(buffer_, Gen1Layout::CurMapHeightOff));
+    AddRuntimeField(out, Gen1Layout::CurMapWidthOff, "wCurMapWidth", ByteValue(buffer_, Gen1Layout::CurMapWidthOff));
+    AddRuntimeField(out, Gen1Layout::CurMapDataPtrOff, "wCurMapDataPtr", WordLEValue(buffer_, Gen1Layout::CurMapDataPtrOff), "pret/pokered wram.asm; Junebug v2 AreaMap");
+    AddRuntimeField(out, Gen1Layout::CurMapTextPtrOff, "wCurMapTextPtr", WordLEValue(buffer_, Gen1Layout::CurMapTextPtrOff), "pret/pokered wram.asm; Junebug v2 AreaMap");
+    AddRuntimeField(out, Gen1Layout::CurMapScriptPtrOff, "wCurMapScriptPtr", WordLEValue(buffer_, Gen1Layout::CurMapScriptPtrOff), "pret/pokered wram.asm; Junebug v2 AreaMap");
+    AddRuntimeField(out, Gen1Layout::CurMapConnectionsOff, "wCurMapConnections bitfield", ByteValue(buffer_, Gen1Layout::CurMapConnectionsOff));
+    AddRuntimeField(out, Gen1Layout::MapBackgroundTileOff, "wMapBackgroundTile", ByteValue(buffer_, Gen1Layout::MapBackgroundTileOff));
+    AddRuntimeField(out, Gen1Layout::NumberOfWarpsOff, "wNumberOfWarps", ByteValue(buffer_, Gen1Layout::NumberOfWarpsOff));
+    AddRuntimeField(out, Gen1Layout::DestinationWarpIdOff, "wDestinationWarpID", ByteValue(buffer_, Gen1Layout::DestinationWarpIdOff));
+    AddRuntimeField(out, Gen1Layout::NumberOfSignsOff, "wNumSigns", ByteValue(buffer_, Gen1Layout::NumberOfSignsOff));
+    AddRuntimeField(out, Gen1Layout::NumberOfSpritesOff, "wNumSprites", ByteValue(buffer_, Gen1Layout::NumberOfSpritesOff));
+    AddRuntimeField(out, Gen1Layout::CurrentMapHeight2Off, "wCurrentMapHeight2", ByteValue(buffer_, Gen1Layout::CurrentMapHeight2Off));
+    AddRuntimeField(out, Gen1Layout::CurrentMapWidth2Off, "wCurrentMapWidth2", ByteValue(buffer_, Gen1Layout::CurrentMapWidth2Off));
+    AddRuntimeField(out, Gen1Layout::MapViewVramPtrOff, "wMapViewVRAMPointer", WordLEValue(buffer_, Gen1Layout::MapViewVramPtrOff), "pret/pokered wram.asm; Junebug v2 AreaMap");
+
+    const u8 fossilItem = buffer_.ReadU8(Gen1Layout::FossilItemOff);
+    AddRuntimeField(out, Gen1Layout::FossilItemOff, "wFossilItem", Gen1ItemLookup::NameFromId(fossilItem) + " (" + HexNumber(fossilItem, 2) + ")");
+    const u8 fossilMon = buffer_.ReadU8(Gen1Layout::FossilMonOff);
+    AddRuntimeField(out, Gen1Layout::FossilMonOff, "wFossilMon", Gen1SpeciesLookup::NameFromId(fossilMon) + " (" + HexNumber(fossilMon, 2) + ")");
+    AddRuntimeField(out, Gen1Layout::LastBlackoutMapOff, "wLastBlackoutMap", MapValue(buffer_.ReadU8(Gen1Layout::LastBlackoutMapOff)));
+    AddRuntimeField(out, Gen1Layout::SpecialWarpDestinationMapOff, "wDestinationMap / special warp destination", MapValue(buffer_.ReadU8(Gen1Layout::SpecialWarpDestinationMapOff)));
+    AddRuntimeField(out, Gen1Layout::DungeonWarpDestinationMapOff, "wDungeonWarpDestinationMap", MapValue(buffer_.ReadU8(Gen1Layout::DungeonWarpDestinationMapOff)));
+    AddRuntimeField(out, Gen1Layout::WhichDungeonWarpOff, "wWhichDungeonWarp", ByteValue(buffer_, Gen1Layout::WhichDungeonWarpOff));
+
+    AddRuntimeField(out, Gen1Layout::WorldFlags1Off, "wStatusFlags1 bit 0 strength outside battle", BoolText(buffer_.GetBit(Gen1Layout::WorldFlags1Off, 0)));
+    AddRuntimeField(out, Gen1Layout::WorldFlags1Off, "wStatusFlags1 bit 1 surfing allowed", BoolText(buffer_.GetBit(Gen1Layout::WorldFlags1Off, 1)));
+    AddRuntimeField(out, Gen1Layout::WorldFlags1Off, "wStatusFlags1 bit 3 got Old Rod", BoolText(out.gotOldRod));
+    AddRuntimeField(out, Gen1Layout::WorldFlags1Off, "wStatusFlags1 bit 4 got Good Rod", BoolText(out.gotGoodRod));
+    AddRuntimeField(out, Gen1Layout::WorldFlags1Off, "wStatusFlags1 bit 5 got Super Rod", BoolText(out.gotSuperRod));
+    AddRuntimeField(out, Gen1Layout::WorldFlags1Off, "wStatusFlags1 bit 6 satisfied Saffron guards", BoolText(out.satisfiedSaffronGuards));
+    AddRuntimeField(out, Gen1Layout::WorldFlags1Off, "wStatusFlags1 bit 7 used Card Key", BoolText(buffer_.GetBit(Gen1Layout::WorldFlags1Off, 7)));
+    AddRuntimeField(out, Gen1Layout::BadgesMirrorOff, "wBeatGymFlags mirror", ByteValue(buffer_, Gen1Layout::BadgesMirrorOff));
+    AddRuntimeField(out, Gen1Layout::BattleFlagsOff, "wStatusFlags3 bit 0 trade-center sprites faced", BoolText(buffer_.GetBit(Gen1Layout::BattleFlagsOff, 0)));
+    AddRuntimeField(out, Gen1Layout::BattleFlagsOff, "wStatusFlags3 bit 3 scripted warp", BoolText(buffer_.GetBit(Gen1Layout::BattleFlagsOff, 3)));
+    AddRuntimeField(out, Gen1Layout::BattleFlagsOff, "wStatusFlags3 bit 4 dungeon warp", BoolText(buffer_.GetBit(Gen1Layout::BattleFlagsOff, 4)));
+    AddRuntimeField(out, Gen1Layout::BattleFlagsOff, "wStatusFlags3 bit 5 NPCs face away", BoolText(buffer_.GetBit(Gen1Layout::BattleFlagsOff, 5)));
+    AddRuntimeField(out, Gen1Layout::BattleFlagsOff, "wStatusFlags3 bit 6 battle", BoolText(buffer_.GetBit(Gen1Layout::BattleFlagsOff, 6)));
+    AddRuntimeField(out, Gen1Layout::BattleFlagsOff, "wStatusFlags3 bit 7 trainer battle", BoolText(buffer_.GetBit(Gen1Layout::BattleFlagsOff, 7)));
+    AddRuntimeField(out, Gen1Layout::WorldFlags2Off, "wStatusFlags4 bit 0 got Lapras", BoolText(out.gotLapras));
+    AddRuntimeField(out, Gen1Layout::WorldFlags2Off, "wStatusFlags4 bit 2 ever healed Pokemon", BoolText(out.everHealedPokemon));
+    AddRuntimeField(out, Gen1Layout::WorldFlags2Off, "wStatusFlags4 bit 3 got starter", BoolText(out.gotStarter));
+    AddRuntimeField(out, Gen1Layout::WorldFlags2Off, "wStatusFlags4 bit 4 no battles", BoolText(buffer_.GetBit(Gen1Layout::WorldFlags2Off, 4)));
+    AddRuntimeField(out, Gen1Layout::WorldFlags2Off, "wStatusFlags4 bit 5 battle ended/blackout", BoolText(buffer_.GetBit(Gen1Layout::WorldFlags2Off, 5)));
+    AddRuntimeField(out, Gen1Layout::WorldFlags2Off, "wStatusFlags4 bit 6 link cable active", BoolText(buffer_.GetBit(Gen1Layout::WorldFlags2Off, 6)));
+    AddRuntimeField(out, Gen1Layout::WorldFlags2Off, "wStatusFlags4 bit 7 scripted NPC movement", BoolText(buffer_.GetBit(Gen1Layout::WorldFlags2Off, 7)));
+    AddRuntimeField(out, Gen1Layout::TextFlagsOff, "wStatusFlags5 bit 0 NPC sprite movement", BoolText(buffer_.GetBit(Gen1Layout::TextFlagsOff, 0)));
+    AddRuntimeField(out, Gen1Layout::TextFlagsOff, "wStatusFlags5 bit 5 ignore joypad", BoolText(buffer_.GetBit(Gen1Layout::TextFlagsOff, 5)));
+    AddRuntimeField(out, Gen1Layout::TextFlagsOff, "wStatusFlags5 bit 6 no letter delay", BoolText(buffer_.GetBit(Gen1Layout::TextFlagsOff, 6)));
+    AddRuntimeField(out, Gen1Layout::TextFlagsOff, "wStatusFlags5 bit 7 joypad simulation", BoolText(buffer_.GetBit(Gen1Layout::TextFlagsOff, 7)));
+    AddRuntimeField(out, Gen1Layout::PlaytimeFlagsOff, "wStatusFlags6 bit 0 count playtime", BoolText(buffer_.GetBit(Gen1Layout::PlaytimeFlagsOff, 0)));
+    AddRuntimeField(out, Gen1Layout::PlaytimeFlagsOff, "wStatusFlags6 bit 1 debug mode", BoolText(buffer_.GetBit(Gen1Layout::PlaytimeFlagsOff, 1)));
+    AddRuntimeField(out, Gen1Layout::PlaytimeFlagsOff, "wStatusFlags6 bit 2 fly or dungeon warp", BoolText(buffer_.GetBit(Gen1Layout::PlaytimeFlagsOff, 2)));
+    AddRuntimeField(out, Gen1Layout::PlaytimeFlagsOff, "wStatusFlags6 bit 3 Fly warp", BoolText(buffer_.GetBit(Gen1Layout::PlaytimeFlagsOff, 3)));
+    AddRuntimeField(out, Gen1Layout::PlaytimeFlagsOff, "wStatusFlags6 bit 4 dungeon warp", BoolText(buffer_.GetBit(Gen1Layout::PlaytimeFlagsOff, 4)));
+    AddRuntimeField(out, Gen1Layout::PlaytimeFlagsOff, "wStatusFlags6 bit 5 force bike ride", BoolText(buffer_.GetBit(Gen1Layout::PlaytimeFlagsOff, 5)));
+    AddRuntimeField(out, Gen1Layout::PlaytimeFlagsOff, "wStatusFlags6 bit 6 blackout destination set", BoolText(buffer_.GetBit(Gen1Layout::PlaytimeFlagsOff, 6)));
+    AddRuntimeField(out, Gen1Layout::FlyFlagsOff, "wStatusFlags7 bit 0 running test battle", BoolText(buffer_.GetBit(Gen1Layout::FlyFlagsOff, 0)));
+    AddRuntimeField(out, Gen1Layout::FlyFlagsOff, "wStatusFlags7 bit 2 skip joypad check warps", BoolText(buffer_.GetBit(Gen1Layout::FlyFlagsOff, 2)));
+    AddRuntimeField(out, Gen1Layout::FlyFlagsOff, "wStatusFlags7 bit 3 trainer wants battle", BoolText(buffer_.GetBit(Gen1Layout::FlyFlagsOff, 3)));
+    AddRuntimeField(out, Gen1Layout::FlyFlagsOff, "wStatusFlags7 bit 4 current map next frame", BoolText(buffer_.GetBit(Gen1Layout::FlyFlagsOff, 4)));
+    AddRuntimeField(out, Gen1Layout::FlyFlagsOff, "wStatusFlags7 bit 7 Fly out of battle", BoolText(buffer_.GetBit(Gen1Layout::FlyFlagsOff, 7)));
+    AddRuntimeField(out, Gen1Layout::EliteFlagsOff, "wElite4Flags bit 1 defeated Lorelei", BoolText(out.defeatedLorelei));
+    AddRuntimeField(out, Gen1Layout::DoorWarpFlagsOff, "wMovementFlags bit 0 standing on door", BoolText(buffer_.GetBit(Gen1Layout::DoorWarpFlagsOff, 0)));
+    AddRuntimeField(out, Gen1Layout::DoorWarpFlagsOff, "wMovementFlags bit 1 moving through door", BoolText(buffer_.GetBit(Gen1Layout::DoorWarpFlagsOff, 1)));
+    AddRuntimeField(out, Gen1Layout::DoorWarpFlagsOff, "wMovementFlags bit 2 standing on warp", BoolText(buffer_.GetBit(Gen1Layout::DoorWarpFlagsOff, 2)));
+    AddRuntimeField(out, Gen1Layout::DoorWarpFlagsOff, "wMovementFlags bit 6 final ledge jumping", BoolText(buffer_.GetBit(Gen1Layout::DoorWarpFlagsOff, 6)));
+    AddRuntimeField(out, Gen1Layout::DoorWarpFlagsOff, "wMovementFlags bit 7 spin player", BoolText(buffer_.GetBit(Gen1Layout::DoorWarpFlagsOff, 7)));
+    AddRuntimeField(out, Gen1Layout::CompletedTradesOff, "wCompletedInGameTradeFlags", TwoByteBitfieldValue(buffer_, Gen1Layout::CompletedTradesOff, 10), "pret/pokered wram.asm; Junebug v2 WorldTrades");
+    AddRuntimeField(out, Gen1Layout::WarpedFromWarpOff, "wWarpedFromWhichWarp", ByteValue(buffer_, Gen1Layout::WarpedFromWarpOff));
+    AddRuntimeField(out, Gen1Layout::WarpedFromMapOff, "wWarpedFromWhichMap", MapValue(buffer_.ReadU8(Gen1Layout::WarpedFromMapOff)));
+    AddRuntimeField(out, Gen1Layout::CardKeyDoorYOff, "wCardKeyDoorY", ByteValue(buffer_, Gen1Layout::CardKeyDoorYOff));
+    AddRuntimeField(out, Gen1Layout::CardKeyDoorXOff, "wCardKeyDoorX", ByteValue(buffer_, Gen1Layout::CardKeyDoorXOff));
+    AddRuntimeField(out, Gen1Layout::LtSurgeLock1Off, "wFirstLockTrashCanIndex", ByteValue(buffer_, Gen1Layout::LtSurgeLock1Off));
+    AddRuntimeField(out, Gen1Layout::LtSurgeLock2Off, "wSecondLockTrashCanIndex", ByteValue(buffer_, Gen1Layout::LtSurgeLock2Off));
+    AddRuntimeField(out, Gen1Layout::TrainerHeaderPtrOff, "wTrainerHeaderPtr", WordLEValue(buffer_, Gen1Layout::TrainerHeaderPtrOff), "pret/pokered wram.asm; Junebug v2 AreaNPC");
+    AddRuntimeField(out, Gen1Layout::WrongAnswerOpponentOff, "wOpponentAfterWrongAnswer", ByteValue(buffer_, Gen1Layout::WrongAnswerOpponentOff));
+    AddRuntimeField(out, Gen1Layout::CurMapScriptOff, "wCurMapScript live index", ByteValue(buffer_, Gen1Layout::CurMapScriptOff));
 
     return out;
 }

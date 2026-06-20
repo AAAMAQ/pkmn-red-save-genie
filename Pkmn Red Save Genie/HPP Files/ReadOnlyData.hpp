@@ -212,6 +212,35 @@ public:
 
 class WorldStateSummary {
 public:
+    class NamedBitState {
+    public:
+        int index = 0;
+        std::string name;
+        std::string location;
+        int x = -1;
+        int y = -1;
+        int sprite = -1;
+        std::string defaultState;
+        bool isSet = false;
+    };
+
+    class CurrentScriptState {
+    public:
+        int index = 0;
+        std::string name;
+        int relativeOffset = 0;
+        int size = 0;
+        int value = 0;
+    };
+
+    class RuntimeField {
+    public:
+        std::string name;
+        std::string offsetHex;
+        std::string value;
+        std::string source;
+    };
+
     int missableObjectsChecked = 0;
     int missableObjectsSet = 0;
     int hiddenItemsChecked = 0;
@@ -228,6 +257,13 @@ public:
     std::vector<int> firstCollectedHiddenCoins;
     std::vector<int> visitedTownIndices;
     std::vector<int> nonZeroCurrentScriptIndices;
+
+    std::vector<NamedBitState> missableObjects;
+    std::vector<NamedBitState> hiddenItems;
+    std::vector<NamedBitState> hiddenCoins;
+    std::vector<NamedBitState> visitedTowns;
+    std::vector<CurrentScriptState> currentScripts;
+    std::vector<RuntimeField> runtimeFields;
 
     bool gotOldRod = false;
     bool gotGoodRod = false;

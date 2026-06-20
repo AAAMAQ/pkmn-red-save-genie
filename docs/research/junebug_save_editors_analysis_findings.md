@@ -1064,11 +1064,11 @@ After this analysis, Save Genie adopted several Junebug-inspired coverage catego
 Implemented in current local Save Genie work:
 
 - `PlayerStateSummary` and `ReadOnlyData::GetPlayerStateSummary()` for options-adjacent bytes, block coordinates, movement directions, walk/bike/surf state, Safari state, HM runtime bits, door/warp bits, and text/playtime flags.
-- `WorldStateSummary` and `ReadOnlyData::GetWorldStateSummary()` for missable object flags, hidden item flags, hidden coin flags, visited town flags, current-script byte-region nonzero counts, and selected story/misc bits.
+- `WorldStateSummary` and `ReadOnlyData::GetWorldStateSummary()` for named missable object flags, hidden item flags, hidden coin flags, visited town/Fly flags, 97 named current-script values, current-script byte-region nonzero counts, and selected Bank 1 runtime/story fields.
 - `EventCategorySummary` and `ReadOnlyData::GetEventCategorySummary()` for defeated-trainer flags, major story milestones, legendary/one-off battles, and badge-vs-gym-leader consistency checks.
 - `DaycareSummary` and `ReadOnlyData::GetDaycareSummary()` for the Daycare in-use flag and deposited boxed-Pokemon-style record.
 - Broader `Gen1TextCodec` coverage for lowercase letters, correct digit bytes (`0xF6..0xFF`), and common punctuation verified against Junebug v1 `text.json`.
-- Compact `PokemonSummary.json` additions for player state, world-state counts, event categories, and Daycare.
+- `PokemonSummary.json` additions for player state, named world-state arrays, event categories, runtime fields, and Daycare.
 - `docs/release/GEN1_SAVE_COVERAGE.md` now splits several formerly broad Bank 1 partial ranges into smaller decoded/partially decoded ranges.
 
 Junebug paths used for this follow-up:
@@ -1083,11 +1083,15 @@ Junebug paths used for this follow-up:
 - v1 `src/assets/data/text.json`
 - v2 `projects/savefile/src/pse-savefile/expanded/world/*.cpp`
 - v2 `projects/savefile/src/pse-savefile/expanded/world/*.h`
+- v2 `projects/db/assets/data/scripts.json`
+- v2 `projects/db/assets/data/missables.json`
+- v2 `projects/db/assets/data/hiddenItems.json`
+- v2 `projects/db/assets/data/hiddenCoins.json`
 - v2 `projects/savefile/src/pse-savefile/expanded/area/areaplayer.cpp`
 - v2 `projects/savefile/src/pse-savefile/expanded/area/areageneral.cpp`
 - v2 `projects/savefile/src/pse-savefile/expanded/daycare.cpp`
 
-Important caveat: Save Genie currently counts current-script bytes in the `0x289C..0x299B` region but does not yet import Junebug's full 97-entry script metadata table. Script names remain future work.
+Important caveat: Save Genie now imports the 97-entry current-script table and the named world-state categories, but it still does not fully interpret current-map warp/sign/sprite cache rows, enemy/link union data, or the post-checksum `0x3524..0x3FFF` range.
 
 ## Recommended Next Actions
 

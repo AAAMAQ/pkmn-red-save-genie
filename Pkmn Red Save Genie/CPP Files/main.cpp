@@ -331,6 +331,88 @@ static bool WritePokemonSummaryJson(
     f << "    \"visitedTownsChecked\": " << worldState.visitedTownsChecked << ",\n";
     f << "    \"currentScriptBytesNonZero\": " << worldState.currentScriptsNonZero << ",\n";
     f << "    \"currentScriptBytesChecked\": " << worldState.currentScriptsChecked << ",\n";
+    f << "    \"currentScripts\": [\n";
+    for (std::size_t i = 0; i < worldState.currentScripts.size(); ++i) {
+        const auto& script = worldState.currentScripts[i];
+        f << "      { "
+          << "\"index\": " << script.index << ", "
+          << "\"name\": \"" << JsonEscape(script.name) << "\", "
+          << "\"relativeOffset\": " << script.relativeOffset << ", "
+          << "\"size\": " << script.size << ", "
+          << "\"value\": " << script.value
+          << " }";
+        if (i + 1 < worldState.currentScripts.size()) f << ",";
+        f << "\n";
+    }
+    f << "    ],\n";
+    f << "    \"missableObjects\": [\n";
+    for (std::size_t i = 0; i < worldState.missableObjects.size(); ++i) {
+        const auto& item = worldState.missableObjects[i];
+        f << "      { "
+          << "\"index\": " << item.index << ", "
+          << "\"name\": \"" << JsonEscape(item.name) << "\", "
+          << "\"location\": \"" << JsonEscape(item.location) << "\", "
+          << "\"sprite\": " << item.sprite << ", "
+          << "\"defaultState\": \"" << JsonEscape(item.defaultState) << "\", "
+          << "\"toggledOff\": " << (item.isSet ? "true" : "false")
+          << " }";
+        if (i + 1 < worldState.missableObjects.size()) f << ",";
+        f << "\n";
+    }
+    f << "    ],\n";
+    f << "    \"hiddenItems\": [\n";
+    for (std::size_t i = 0; i < worldState.hiddenItems.size(); ++i) {
+        const auto& item = worldState.hiddenItems[i];
+        f << "      { "
+          << "\"index\": " << item.index << ", "
+          << "\"location\": \"" << JsonEscape(item.location) << "\", "
+          << "\"x\": " << item.x << ", "
+          << "\"y\": " << item.y << ", "
+          << "\"collected\": " << (item.isSet ? "true" : "false")
+          << " }";
+        if (i + 1 < worldState.hiddenItems.size()) f << ",";
+        f << "\n";
+    }
+    f << "    ],\n";
+    f << "    \"hiddenCoins\": [\n";
+    for (std::size_t i = 0; i < worldState.hiddenCoins.size(); ++i) {
+        const auto& item = worldState.hiddenCoins[i];
+        f << "      { "
+          << "\"index\": " << item.index << ", "
+          << "\"location\": \"" << JsonEscape(item.location) << "\", "
+          << "\"x\": " << item.x << ", "
+          << "\"y\": " << item.y << ", "
+          << "\"collected\": " << (item.isSet ? "true" : "false")
+          << " }";
+        if (i + 1 < worldState.hiddenCoins.size()) f << ",";
+        f << "\n";
+    }
+    f << "    ],\n";
+    f << "    \"visitedTowns\": [\n";
+    for (std::size_t i = 0; i < worldState.visitedTowns.size(); ++i) {
+        const auto& item = worldState.visitedTowns[i];
+        f << "      { "
+          << "\"index\": " << item.index << ", "
+          << "\"name\": \"" << JsonEscape(item.name) << "\", "
+          << "\"visited\": " << (item.isSet ? "true" : "false")
+          << " }";
+        if (i + 1 < worldState.visitedTowns.size()) f << ",";
+        f << "\n";
+    }
+    f << "    ],\n";
+    f << "    \"runtimeFields\": [\n";
+    for (std::size_t i = 0; i < worldState.runtimeFields.size(); ++i) {
+        const auto& field = worldState.runtimeFields[i];
+        f << "      { "
+          << "\"offset\": \"" << JsonEscape(field.offsetHex) << "\", "
+          << "\"name\": \"" << JsonEscape(field.name) << "\", "
+          << "\"value\": \"" << JsonEscape(field.value) << "\", "
+          << "\"source\": \"" << JsonEscape(field.source) << "\""
+          << " }";
+        if (i + 1 < worldState.runtimeFields.size()) f << ",";
+        f << "\n";
+    }
+    f << "    ],\n";
     f << "    \"gotStarter\": " << (worldState.gotStarter ? "true" : "false") << ",\n";
     f << "    \"gotLapras\": " << (worldState.gotLapras ? "true" : "false") << ",\n";
     f << "    \"defeatedLorelei\": " << (worldState.defeatedLorelei ? "true" : "false") << "\n";

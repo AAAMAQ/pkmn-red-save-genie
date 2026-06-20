@@ -119,10 +119,12 @@ main.cpp
 
 ### ✅ World / Player State Diagnostics
 
-- Current script byte-region nonzero count
-- Missable object/NPC/object-state flag counts
-- Hidden item and hidden coin flag counts
-- Visited town/Fly-destination flag counts
+- 97 named current-script progress values from `pret/pokered`/Junebug metadata
+- 228 named missable object/NPC/object-state flags
+- 54 named hidden item flags with map coordinates
+- 12 named hidden coin flags with Game Corner coordinates
+- 11 visited town/Fly-destination flags with town names
+- Bank 1 runtime-field ledger for known map/header/warp/status/trade/script fields
 - Player block coordinates, movement mode, direction bytes, Safari state, door/warp flags, and selected story/runtime bits
 - Daycare in-use flag and deposited Pokémon decode
 

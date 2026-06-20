@@ -47,13 +47,14 @@ The current completed milestone, confirmed by Git history and source code, is th
 | Hall of Fame parsing | Implemented |
 | Pokedex owned/seen parsing | Implemented |
 | Bag and PC item box parsing | Implemented |
-| Raw event flag summary | Implemented, labels future |
+| Event flag summary | Implemented with `pret/pokered` labels, trainer rows, story categories, static battles, and gym/badge consistency |
 | Party Pokemon decode | Implemented and regression-anchored |
 | PC box decode/export | Implemented, still needs deeper plausibility verification |
 | Move lookup | Implemented |
 | JSON and text exports | Implemented |
-| Safe editing layer | Partial MVP foundation |
-| Current box cache decode | Planned but not implemented |
+| Safe editing layer | Conservative MVP implemented; needs broader real-save validation before release |
+| Current box cache decode | Implemented and exported separately |
+| World/player/daycare diagnostics | Implemented read-only with named scripts, missables, hidden items, hidden coins, visited towns, runtime fields, and Daycare |
 | FireRed reader/writer | Planned but not implemented |
 | Full Red to FireRed conversion | Planned but not implemented |
 
@@ -397,7 +398,7 @@ Important getters:
 | `GetPartyAsBox0()` | Implemented. |
 | `GetPCBox(int)` | Implemented. |
 | `GetAllBoxesExport()` | Implemented. |
-| `GetCurrentBoxCache()` | Not implemented. |
+| `GetCurrentBoxCache()` | Implemented and exported separately from permanent PC boxes. |
 
 ### WriteOnlyData
 
@@ -902,16 +903,14 @@ Roadmap:
 
 | Stage | Goal | Dependencies | Risks | Validation | Completion criteria |
 | --- | --- | --- | --- | --- | --- |
-| 1. Verify PC box decode | Spot-check boxes 1-12 and fix any verified offset issue. | Current JSON/export. | Box level offset confusion. | Compare output to known save data/screens/diffs. | Plausible species/names/levels/moves/EXP/DVs/Stat Exp. |
-| 2. Add current box cache | Decode `0x30C0` as a box. | Existing box parser. | Confusing cache vs permanent boxes. | Compare current-box count and content. | `GetCurrentBoxCache()` and optional export. |
-| 3. Expand compact summary | Add selected trainer/dex/cache counts. | Reader getters. | Summary bloat. | JSON validity/golden output. | Compact stable schema. |
-| 4. Label Gen I event/trainer flags | Map raw indices to names. | `pret/pokered` macro parser. | Incorrect index mapping. | Macro tests and save diffs. | Named flags and `EVENT_BEAT_*` labels. |
-| 5. Implement safe WriteOnlyData MVP | Copy-safe edits. | Tests and checksum repair. | Corruption from unsafe edits. | Re-read edited saves. | Valid checksum and change report. |
-| 6. Save coverage report | Map decoded/known/unknown ranges. | Current constants and references. | Overclaiming coverage. | Manual review. | 0x0000-0x7FFF coverage map. |
-| 7. FireRed reader | Parse sections and trainer summary. | Gen III research. | Section rotation/save index. | Synthetic and real test saves. | Valid section map and summary. |
-| 8. FireRed writer | Unchanged round-trip then safe field edit. | Reader/checksum tests. | Corrupting active slot. | Emulator load. | Valid copied save. |
-| 9. Pokemon conversion adapter | Convert `PokemonMon` to Gen III Pokemon. | Gen III Pokemon codec and policy. | Legality/policy ambiguity. | Deterministic tests. | Reported conversion output. |
-| 10. Limited whole-save proof | Produce safe FireRed save from Red model. | All above. | Flags/location/story. | Emulator load and report. | Playable MVP with conservative policy. |
+| 1. Real-save validation pass | Validate PC boxes, current box cache, named event/world rows, and Safe Editor output against controlled saves/save diffs. | Current parser/export/tests. | Mistaking runtime cache bytes for stable state. | Emulator screenshots, byte diffs, decoded output comparison. | Confirmed real-save evidence for release-critical rows. |
+| 2. Text/validation polish | Improve unsupported-character reporting and malformed-save diagnostics. | Safe Editor and parser tests. | Silent lossy text handling. | Synthetic malformed fixtures and editor input tests. | Clear errors without crashes or silent replacement. |
+| 3. Freeze export schemas | Stabilize `PokemonBoxes.json`, `PokemonSummary.json`, `SaveGenieSummary.txt`, and future `.red.json` direction. | Current richer exports. | Summary bloat and schema churn. | JSON validation and snapshot review. | Documented schema version/field meanings. |
+| 4. Public Gen I release prep | Finish README, release checklist, limitations, generated-output docs, and no-ROM/no-save policy. | Release docs. | Overclaiming region/version support. | Manual release checklist. | First public Save Genie release candidate. |
+| 5. FireRed reader | Parse sections and trainer summary. | Gen III research. | Section rotation/save index. | Synthetic and real test saves. | Valid section map and summary. |
+| 6. FireRed writer | Unchanged round-trip then safe field edit. | Reader/checksum tests. | Corrupting active slot. | Emulator load. | Valid copied save. |
+| 7. Pokemon conversion adapter | Convert `PokemonMon` to Gen III Pokemon. | Gen III Pokemon codec and policy. | Legality/policy ambiguity. | Deterministic tests. | Reported conversion output. |
+| 8. Limited whole-save proof | Produce safe FireRed save from Red model. | All above. | Flags/location/story. | Emulator load and report. | Playable MVP with conservative policy. |
 | 11. Expand flags/location | Improve narrative continuity. | Extensive diffs and decomp research. | Sevii/postgame inconsistency. | Scenario tests. | Documented mapping coverage. |
 
 ## Part XXI - Research Findings

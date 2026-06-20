@@ -304,4 +304,24 @@ Implementation impact: `SaveGenieSummary.txt` now includes complete true/false k
 
 Validation: Synthetic tests set Brock, Misty, Pokédex, Articuno, and `EVENT_BEAT_VIRIDIAN_FOREST_TRAINER_0`, then assert the decoded trainer row `Trainer #1, Viridian Forest` is complete.
 
-Remaining questions: Completed scripts, missable objects, hidden items, hidden coins, and map object states still need friendlier labels from authoritative pret metadata before they can be considered fully human-readable.
+Remaining questions: Current-map object/warp/sign cache rows and enemy/link union data still need deeper research before they can be considered fully human-readable.
+
+## Finding R-016 - World-State Metadata Can Be Named Without Expanding Editor Scope
+
+Date: 2026-06-20
+
+Status: Confirmed from external source code and current implementation
+
+Source: `pret/pokered` commit `d70d99ffbd329473d96eaaf19fd97c86d2220b7f`, `ram/wram.asm`, `data/events/hidden_item_coords.asm`, `data/events/hidden_coins.asm`; `junebug12851/pokered-save-editor-2`, `projects/db/assets/data/scripts.json`, `missables.json`, `hiddenItems.json`, `hiddenCoins.json`; `ReadOnlyData::GetWorldStateSummary()`
+
+Evidence: `pret/pokered` identifies the Bank 1 world-state symbols for current scripts, toggleable/missable object flags, hidden item flags, hidden coin flags, visited-town flags, map header/runtime fields, status bytes, completed trades, warp bookkeeping, and current-map script state. Junebug/Twilight's v2 DB provides curated names/counts for the 97 script values, 228 missable objects, 54 hidden items, 12 hidden coins, and 11 Fly destination flags. Save Genie now exports those categories as read-only English records while preserving unknown/padding/runtime bytes.
+
+Previous assumption: Save Genie could only show counts and first set indices for these categories until a larger event-system refactor.
+
+Finding: Complete named read-only output for used current scripts, missables, hidden items, hidden coins, and visited towns can be added conservatively without allowing writes or pretending every adjacent runtime byte is semantically understood.
+
+Implementation impact: `WorldStateSummary` now includes `currentScripts`, `missableObjects`, `hiddenItems`, `hiddenCoins`, `visitedTowns`, and `runtimeFields`. `PokemonSummary.json` and `SaveGenieSummary.txt` include these richer English records. The Safe Editor scope remains unchanged.
+
+Validation: Synthetic tests assert named entries for Prof. Oak, Articuno, S.S. Anne Kitchen hidden item, Game Corner hidden coins, Pallet Town/Saffron City Fly flags, and the Blues House current-script value.
+
+Remaining questions: Current-map warp entries, sign rows, cached sprite rows, enemy/link union data, and the post-checksum `0x3524-0x3FFF` range still need research before any stronger completeness claim.

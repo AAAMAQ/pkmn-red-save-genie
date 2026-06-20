@@ -76,15 +76,15 @@ Question: What is the complete coverage map for `0x0000-0x7FFF`?
 
 Why it matters: The project wants to become a reliable Save Genie foundation, not just a partial summary tool.
 
-Current evidence: `Gen1Layout` defines many important ranges. Bulbapedia and `pret/pokered` describe more fields.
+Current evidence: `docs/release/GEN1_SAVE_COVERAGE.md` now classifies `0x0000-0x7FFF`, and `Gen1Layout`/`WorldStateSummary` include named current scripts, missables, hidden items, hidden coins, visited towns/Fly destinations, Daycare, current box cache, event labels, and many Bank 1 runtime fields. Some runtime/cache/union ranges remain intentionally not assigned English meanings.
 
 Likely source: `SaveStructure.hpp`, Bulbapedia Gen I, `pret/pokered/ram/sram.asm`, `pret/pokered/ram/wram.asm`.
 
-Experiment needed: Build a static coverage report and manually classify ranges.
+Experiment needed: Validate the current coverage map against real save-diff experiments, then decide whether current-map warp/sign/sprite cache rows should become structured exports.
 
 Priority: Medium
 
-Status: Open
+Status: Partially answered for Gen I release coverage; still open for real-save validation and deeper runtime/cache interpretation.
 
 ## Q-FLAG-001 - Which Gen I event flags correspond to defeated trainers?
 
