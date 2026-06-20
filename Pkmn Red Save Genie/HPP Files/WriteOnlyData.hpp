@@ -90,7 +90,8 @@ public:
     // Badges bitfield (8 bits)
     std::optional<u8> newBadges;
 
-    // Safe location edit
+    // Location writes are intentionally disabled for the Safe Editor MVP.
+    // These placeholders remain for future controlled map/location work.
     std::optional<u8>  newMapId;
     std::optional<u8>  newX;
     std::optional<u8>  newY;
@@ -189,7 +190,8 @@ public:
     // Remove item entirely
     EditMessage RemoveItem(ItemListKind kind, u8 itemId, EditLog* log = nullptr);
 
-    // Set exact quantity for an item; if qty==0 may remove (implementation-defined)
+    // Set exact quantity for an existing item. The MVP rejects qty==0 so it
+    // cannot accidentally remove entries or malformed list state.
     EditMessage SetItemQuantity(ItemListKind kind, u8 itemId, u8 quantity, EditLog* log = nullptr);
 
     // ---------- Future Pokémon edits (placeholders) ----------

@@ -1296,23 +1296,39 @@ std::string Gen1MoveLookup::MoveFromId(u8 moveId) {
 // =========================================================
 
 char Gen1TextCodec::ByteToAscii(u8 byte) {
-    // Minimal charset for MVP (names): A-Z, 0-9, space, terminator.
+    // Common Gen I font bytes used by names and save text.
+    // Reference cross-check: junebug12851/pokered-save-editor text.json.
     if (byte >= 0x80 && byte <= 0x99) return static_cast<char>('A' + (byte - 0x80));
-    if (byte >= 0xA0 && byte <= 0xA9) return static_cast<char>('0' + (byte - 0xA0));
+    if (byte >= 0xA0 && byte <= 0xB9) return static_cast<char>('a' + (byte - 0xA0));
+    if (byte >= 0xF6 && byte <= 0xFF) return static_cast<char>('0' + (byte - 0xF6));
     if (byte == 0x7F) return ' ';
+    if (byte == 0xE0) return '\'';
+    if (byte == 0xE3) return '-';
+    if (byte == 0xE6) return '?';
+    if (byte == 0xE7) return '!';
+    if (byte == 0xE8) return '.';
+    if (byte == 0xF0) return '$';
+    if (byte == 0xF3) return '/';
+    if (byte == 0xF4) return ',';
     if (byte == 0x50) return '\0';
     return '?';
 }
 
 u8 Gen1TextCodec::AsciiToByte(char c) {
-    // Normalize lowercase to uppercase.
-    if (c >= 'a' && c <= 'z') c = static_cast<char>(c - 'a' + 'A');
-
     if (c >= 'A' && c <= 'Z') return static_cast<u8>(0x80 + (c - 'A'));
-    if (c >= '0' && c <= '9') return static_cast<u8>(0xA0 + (c - '0'));
+    if (c >= 'a' && c <= 'z') return static_cast<u8>(0xA0 + (c - 'a'));
+    if (c >= '0' && c <= '9') return static_cast<u8>(0xF6 + (c - '0'));
     if (c == ' ') return 0x7F;
+    if (c == '\'') return 0xE0;
+    if (c == '-') return 0xE3;
+    if (c == '?') return 0xE6;
+    if (c == '!') return 0xE7;
+    if (c == '.') return 0xE8;
+    if (c == '$') return 0xF0;
+    if (c == '/') return 0xF3;
+    if (c == ',') return 0xF4;
 
-    // Fallback to space for unsupported characters in MVP.
+    // Fallback to space for unsupported direct writes; editor UI rejects first.
     return 0x7F;
 }
 

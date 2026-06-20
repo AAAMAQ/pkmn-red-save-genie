@@ -64,6 +64,11 @@ public:
     //   "(EDITED) Pokemon - Red Version.sav"
     static std::string MakeEditedPath(const std::string& path);
 
+    // Create a collision-safe edited output path.
+    // If "(EDITED) <original>" exists, this returns "(EDITED 2) <original>",
+    // then "(EDITED 3) <original>", and so on.
+    static std::string MakeEditedPathCollisionSafe(const std::string& path);
+
     // Derive a backup path from an input path.
     // Internal helper used by BackupFile.
     static std::string MakeBackupPath(const std::string& path);

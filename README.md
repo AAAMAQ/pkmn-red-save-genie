@@ -25,6 +25,26 @@ The system does **not** distribute ROMs or copyrighted data.
 
 ---
 
+## Release Status
+
+The current Gen I Save Genie release path is tracked in:
+
+- `docs/release/GEN1_SAVE_COVERAGE.md`
+- `docs/release/RELEASE_CHECKLIST.md`
+
+The Gen I reader/exporter is the current production focus. FireRed save writing, PCCS integration, and whole-save Red-to-FireRed conversion remain future project phases and are not required for the first Save Genie release.
+
+## Credits And Research References
+
+Save Genie uses its own C++ implementation, but several Gen I coverage decisions were cross-checked against Junebug/Twilight's Apache-2.0 Pokémon Red/Blue save editor work:
+
+- `junebug12851/pokered-save-editor`
+- `junebug12851/pokered-save-editor-2`
+
+These projects are credited as important research references for world-state ranges, Daycare offsets, text/font data, editor safety lessons, and test strategy. `pret/pokered` remains the authority for event-symbol names, trainer-completion flags, and game behavior.
+
+---
+
 ## 🏗 Architecture
 
 The project is designed with strict separation of responsibility.
@@ -92,6 +112,19 @@ main.cpp
 - Bitfield parsing
 - Total flags set
 - Indexed flag reporting
+- `pret/pokered` event-label reporting
+- Complete known true/false named event flag list
+- Trainer-completion rows such as `Trainer #1, Viridian Forest: true`
+- Defeated-trainer, major-story, static-battle, and gym/badge consistency categories
+
+### ✅ World / Player State Diagnostics
+
+- Current script byte-region nonzero count
+- Missable object/NPC/object-state flag counts
+- Hidden item and hidden coin flag counts
+- Visited town/Fly-destination flag counts
+- Player block coordinates, movement mode, direction bytes, Safari state, door/warp flags, and selected story/runtime bits
+- Daycare in-use flag and deposited Pokémon decode
 
 ### ✅ Hall of Fame Parsing (Bank 0)
 

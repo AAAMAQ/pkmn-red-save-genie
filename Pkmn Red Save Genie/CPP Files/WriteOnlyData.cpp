@@ -22,6 +22,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <iomanip>
 #include <sstream>
 
 namespace savegenie {
@@ -89,21 +90,18 @@ EditMessage WriteOnlyData::SetCoins(u16 coins) {
 }
 
 EditMessage WriteOnlyData::SetBadges(u8 badgesBitfield) {
+    // Gen I keeps a duplicate badge bitfield. Keep both copies synchronized,
+    // but do not touch related story/event flags in the MVP.
     buffer_.WriteU8(Gen1Layout::BadgesOff, badgesBitfield);
+    buffer_.WriteU8(Gen1Layout::BadgesMirrorOff, badgesBitfield);
     return EditMessage(EditStatus::Ok, "Badges bitfield set.");
 }
 
 EditMessage WriteOnlyData::SetLocation(u8 mapId, u8 x, u8 y) {
-    // Conservative validation: accept any mapId that isn't explicitly INVALID in your map table.
-    if (Gen1MapLookup::NameFromId(mapId) == "INVALID") {
-        return EditMessage(EditStatus::OutOfRange, "Map ID is invalid (per map table).");
-    }
-
-    buffer_.WriteU8(Gen1Layout::MapIdOff, mapId);
-    buffer_.WriteU8(Gen1Layout::XCoordOff, x);
-    buffer_.WriteU8(Gen1Layout::YCoordOff, y);
-
-    return EditMessage(EditStatus::Ok, "Location set (MapID/X/Y).");
+    (void)mapId;
+    (void)x;
+    (void)y;
+    return EditMessage(EditStatus::InvalidArgument, "Location edits are disabled in the Safe Editor MVP.");
 }
 
 EditMessage WriteOnlyData::Apply(const EditRequest& req, EditLog* log) {
@@ -193,11 +191,48 @@ EditMessage WriteOnlyData::RemoveItem(ItemListKind kind, u8 itemId, EditLog* log
 }
 
 EditMessage WriteOnlyData::SetItemQuantity(ItemListKind kind, u8 itemId, u8 quantity, EditLog* log) {
-    (void)kind;
-    (void)itemId;
-    (void)quantity;
-    (void)log;
-    return EditMessage(EditStatus::InvalidArgument, "Item edits not implemented yet (next step).");
+    const auto idCheck = ValidateItemId(itemId, false);
+    if (!idCheck.Ok()) return idCheck;
+
+    const auto qtyCheck = ValidateQuantity(quantity, 1, 99);
+    if (!qtyCheck.Ok()) return qtyCheck;
+
+    const auto r = RegionFor(kind);
+    buffer_.RequireRange(r.base, r.len);
+
+    const u8 rawCount = buffer_.ReadU8(r.countOff);
+    const int count = std::clamp<int>(static_cast<int>(rawCount), 0, r.maxPairs);
+
+    std::size_t off = r.pairsOff;
+    for (int i = 0; i < count; ++i) {
+        buffer_.RequireRange(off, 2);
+
+        const u8 existingItemId = buffer_.ReadU8(off);
+        if (existingItemId == 0xFF) break;
+
+        if (existingItemId == itemId) {
+            const u8 oldQuantity = buffer_.ReadU8(off + 1);
+            buffer_.WriteU8(off + 1, quantity);
+
+            if (log) {
+                std::ostringstream oss;
+                oss << "Set "
+                    << (kind == ItemListKind::Bag ? "bag" : "PC item box")
+                    << " quantity for " << Gen1ItemLookup::NameFromId(itemId)
+                    << " (0x" << std::uppercase << std::hex << std::setw(2)
+                    << std::setfill('0') << static_cast<int>(itemId)
+                    << std::dec << ") from " << static_cast<int>(oldQuantity)
+                    << " to " << static_cast<int>(quantity) << ".";
+                log->Add(oss.str());
+            }
+
+            return EditMessage(EditStatus::Ok, "Item quantity set.");
+        }
+
+        off += 2;
+    }
+
+    return EditMessage(EditStatus::ItemNotFound, "Item is not present in the selected list.");
 }
 
 EditMessage WriteOnlyData::ApplyPokemonEdit(const PokemonEditRequest& req, EditLog* log) {

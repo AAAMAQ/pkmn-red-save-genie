@@ -16,6 +16,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <sstream>
 #include <stdexcept>
 
 namespace savegenie {
@@ -80,6 +81,30 @@ std::string FileManipulation::MakeEditedPath(const std::string& path) {
     std::string filename = p.filename().string();
     fs::path out = dir / ("(EDITED) " + filename);
     return out.string();
+}
+
+std::string FileManipulation::MakeEditedPathCollisionSafe(const std::string& path) {
+    namespace fs = std::filesystem;
+    fs::path p(path);
+    fs::path dir = p.parent_path();
+    const std::string filename = p.filename().string();
+
+    for (int i = 1; i < 10000; ++i) {
+        std::ostringstream prefix;
+        if (i == 1) {
+            prefix << "(EDITED) ";
+        } else {
+            prefix << "(EDITED " << i << ") ";
+        }
+
+        fs::path candidate = dir / (prefix.str() + filename);
+        std::error_code ec;
+        if (!fs::exists(candidate, ec) && !ec) {
+            return candidate.string();
+        }
+    }
+
+    throw std::runtime_error("MakeEditedPathCollisionSafe failed: too many edited files already exist for " + path);
 }
 
 std::string FileManipulation::BackupFile(const std::string& path) {

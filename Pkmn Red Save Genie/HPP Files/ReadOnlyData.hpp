@@ -83,10 +83,160 @@ public:
 
 class FlagSummary {
 public:
+    class NamedFlag {
+    public:
+        int index = 0;
+        std::string name;
+        bool isSet = false;
+    };
+
     int totalFlagsChecked = 0;
     int totalFlagsSet = 0;
+    int namedFlagsKnown = 0;
+    int namedFlagsSet = 0;
+    int beatFlagsSet = 0;
 
     std::vector<int> setFlagIndices;
+    std::vector<NamedFlag> namedFlags;
+    std::vector<NamedFlag> namedSetFlags;
+
+    std::string ToString() const;
+};
+
+// =========================================================
+// Event / Story Category Summary Model
+// =========================================================
+
+class EventCategorySummary {
+public:
+    class TrainerFlag {
+    public:
+        int index = 0;
+        std::string eventName;
+        std::string label;
+        std::string location;
+        int trainerNumber = 0;
+        bool isComplete = false;
+    };
+
+    class StoryFlag {
+    public:
+        int index = 0;
+        std::string eventName;
+        std::string label;
+        std::string category;
+        bool isComplete = false;
+    };
+
+    class GymConsistency {
+    public:
+        std::string badgeName;
+        std::string eventName;
+        bool badgeOwned = false;
+        bool leaderEventSet = false;
+        bool consistent = true;
+    };
+
+    int defeatedTrainerFlagsSet = 0;
+    int trainerFlagsKnown = 0;
+    int trainerFlagsComplete = 0;
+    int storyFlagsKnown = 0;
+    int storyFlagsComplete = 0;
+    int staticEncounterFlagsKnown = 0;
+    int staticEncounterFlagsComplete = 0;
+    int gymLeaderFlagsSet = 0;
+    int majorStoryMilestonesSet = 0;
+    int legendaryFlagsSet = 0;
+    int gymStoryMismatchCount = 0;
+
+    std::vector<std::string> defeatedTrainerFlags;
+    std::vector<std::string> majorStoryMilestones;
+    std::vector<std::string> legendaryFlags;
+    std::vector<TrainerFlag> trainerFlags;
+    std::vector<StoryFlag> storyFlags;
+    std::vector<StoryFlag> staticEncounterFlags;
+    std::vector<GymConsistency> gymConsistency;
+
+    std::string ToString() const;
+};
+
+// =========================================================
+// Player / Runtime State Summary Model
+// =========================================================
+
+class PlayerStateSummary {
+public:
+    u8 optionsByte = 0;
+    u8 letterDelayByte = 0;
+    u8 contrast = 0;
+
+    u8 yBlockCoord = 0;
+    u8 xBlockCoord = 0;
+    u8 playerMoveDir = 0;
+    u8 playerLastStopDir = 0;
+    u8 playerCurDir = 0;
+    u8 walkBikeSurf = 0;
+    u8 playerJumpingYScreen = 0;
+    u8 specialWarpY = 0;
+    u8 specialWarpX = 0;
+
+    u16 safariSteps = 0;
+    u8 safariBallCount = 0;
+    bool safariGameOver = false;
+
+    bool strengthOutsideBattle = false;
+    bool surfingAllowed = false;
+    bool flyOutOfBattle = false;
+    bool usedCardKey = false;
+    bool isBattle = false;
+    bool isTrainerBattle = false;
+    bool noBattles = false;
+    bool battleEndedOrBlackout = false;
+    bool usingLinkCable = false;
+    bool standingOnDoor = false;
+    bool movingThroughDoor = false;
+    bool standingOnWarp = false;
+    bool finalLedgeJumping = false;
+    bool spinPlayer = false;
+    bool noLetterDelay = false;
+    bool countPlaytime = false;
+
+    std::string MovementModeName() const;
+    std::string DirectionName(u8 dir) const;
+    std::string ToString() const;
+};
+
+// =========================================================
+// World / Object State Summary Model
+// =========================================================
+
+class WorldStateSummary {
+public:
+    int missableObjectsChecked = 0;
+    int missableObjectsSet = 0;
+    int hiddenItemsChecked = 0;
+    int hiddenItemsCollected = 0;
+    int hiddenCoinsChecked = 0;
+    int hiddenCoinsCollected = 0;
+    int visitedTownsChecked = 0;
+    int visitedTownsSet = 0;
+    int currentScriptsChecked = 0;
+    int currentScriptsNonZero = 0;
+
+    std::vector<int> firstSetMissableObjects;
+    std::vector<int> firstCollectedHiddenItems;
+    std::vector<int> firstCollectedHiddenCoins;
+    std::vector<int> visitedTownIndices;
+    std::vector<int> nonZeroCurrentScriptIndices;
+
+    bool gotOldRod = false;
+    bool gotGoodRod = false;
+    bool gotSuperRod = false;
+    bool satisfiedSaffronGuards = false;
+    bool gotLapras = false;
+    bool everHealedPokemon = false;
+    bool gotStarter = false;
+    bool defeatedLorelei = false;
 
     std::string ToString() const;
 };
@@ -224,6 +374,20 @@ public:
 class PokemonBoxesExport {
 public:
     std::vector<PokemonBox> boxes; // includes party as box 0
+    PokemonBox currentBoxCache;
+    bool hasCurrentBoxCache = false;
+
+    std::string ToString() const;
+};
+
+// =========================================================
+// Daycare Model
+// =========================================================
+
+class DaycareSummary {
+public:
+    bool inUse = false;
+    PokemonMon pokemon;
 
     std::string ToString() const;
 };
@@ -266,6 +430,12 @@ public:
 
     // --- Flags ---
     FlagSummary GetEventFlagSummary() const;
+    EventCategorySummary GetEventCategorySummary() const;
+
+    // --- Player / World State ---
+    PlayerStateSummary GetPlayerStateSummary() const;
+    WorldStateSummary GetWorldStateSummary() const;
+    DaycareSummary GetDaycareSummary() const;
 
     // --- Pokédex ---
     PokedexSummary GetPokedexSummary(bool includeNames = true) const;
@@ -282,6 +452,9 @@ public:
 
     // PC Boxes 1..12 (Banks 2/3).
     PokemonBox GetPCBox(int boxIndex1to12) const;
+
+    // Bank 1 current box cache. This is separate from permanent Boxes 1..12.
+    PokemonBox GetCurrentBoxCache() const;
 
     // Convenience export: Party (box 0) + Boxes 1..12.
     PokemonBoxesExport GetAllBoxesExport() const;

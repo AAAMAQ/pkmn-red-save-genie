@@ -6,6 +6,14 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		84C0DE012FE7000000000001 /* FileManipulation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84C0DE102FE7000000000001 /* FileManipulation.cpp */; };
+		84C0DE022FE7000000000002 /* SaveStructure.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84C0DE112FE7000000000002 /* SaveStructure.cpp */; };
+		84C0DE032FE7000000000003 /* ReadOnlyData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84C0DE122FE7000000000003 /* ReadOnlyData.cpp */; };
+		84C0DE042FE7000000000004 /* WriteOnlyData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84C0DE132FE7000000000004 /* WriteOnlyData.cpp */; };
+		84C0DE052FE7000000000005 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84C0DE142FE7000000000005 /* main.cpp */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXCopyFilesBuildPhase section */
 		84B6C5292F3F7BD400F001AD /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -20,15 +28,16 @@
 
 /* Begin PBXFileReference section */
 		84B6C52B2F3F7BD400F001AD /* Pkmn Red Save Genie */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "Pkmn Red Save Genie"; sourceTree = BUILT_PRODUCTS_DIR; };
+		84C0DE102FE7000000000001 /* FileManipulation.cpp */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.cpp.cpp"; path = FileManipulation.cpp; sourceTree = "<group>"; };
+		84C0DE112FE7000000000002 /* SaveStructure.cpp */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.cpp.cpp"; path = SaveStructure.cpp; sourceTree = "<group>"; };
+		84C0DE122FE7000000000003 /* ReadOnlyData.cpp */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.cpp.cpp"; path = ReadOnlyData.cpp; sourceTree = "<group>"; };
+		84C0DE132FE7000000000004 /* WriteOnlyData.cpp */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.cpp.cpp"; path = WriteOnlyData.cpp; sourceTree = "<group>"; };
+		84C0DE142FE7000000000005 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.cpp.cpp"; path = main.cpp; sourceTree = "<group>"; };
+		84C0DE152FE7000000000006 /* FileManipulation.hpp */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.cpp.h"; path = FileManipulation.hpp; sourceTree = "<group>"; };
+		84C0DE162FE7000000000007 /* SaveStructure.hpp */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.cpp.h"; path = SaveStructure.hpp; sourceTree = "<group>"; };
+		84C0DE172FE7000000000008 /* ReadOnlyData.hpp */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.cpp.h"; path = ReadOnlyData.hpp; sourceTree = "<group>"; };
+		84C0DE182FE7000000000009 /* WriteOnlyData.hpp */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.cpp.h"; path = WriteOnlyData.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
-
-/* Begin PBXFileSystemSynchronizedRootGroup section */
-		84B6C52D2F3F7BD400F001AD /* Pkmn Red Save Genie */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "Pkmn Red Save Genie";
-			sourceTree = "<group>";
-		};
-/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		84B6C5282F3F7BD400F001AD /* Frameworks */ = {
@@ -57,6 +66,38 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		84B6C52D2F3F7BD400F001AD /* Pkmn Red Save Genie */ = {
+			isa = PBXGroup;
+			children = (
+				84C0DE202FE7000000000001 /* CPP Files */,
+				84C0DE212FE7000000000002 /* HPP Files */,
+			);
+			path = "Pkmn Red Save Genie";
+			sourceTree = "<group>";
+		};
+		84C0DE202FE7000000000001 /* CPP Files */ = {
+			isa = PBXGroup;
+			children = (
+				84C0DE102FE7000000000001 /* FileManipulation.cpp */,
+				84C0DE122FE7000000000003 /* ReadOnlyData.cpp */,
+				84C0DE112FE7000000000002 /* SaveStructure.cpp */,
+				84C0DE132FE7000000000004 /* WriteOnlyData.cpp */,
+				84C0DE142FE7000000000005 /* main.cpp */,
+			);
+			path = "CPP Files";
+			sourceTree = "<group>";
+		};
+		84C0DE212FE7000000000002 /* HPP Files */ = {
+			isa = PBXGroup;
+			children = (
+				84C0DE152FE7000000000006 /* FileManipulation.hpp */,
+				84C0DE172FE7000000000008 /* ReadOnlyData.hpp */,
+				84C0DE162FE7000000000007 /* SaveStructure.hpp */,
+				84C0DE182FE7000000000009 /* WriteOnlyData.hpp */,
+			);
+			path = "HPP Files";
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -71,9 +112,6 @@
 			buildRules = (
 			);
 			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				84B6C52D2F3F7BD400F001AD /* Pkmn Red Save Genie */,
 			);
 			name = "Pkmn Red Save Genie";
 			packageProductDependencies = (
@@ -120,6 +158,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				84C0DE012FE7000000000001 /* FileManipulation.cpp in Sources */,
+				84C0DE022FE7000000000002 /* SaveStructure.cpp in Sources */,
+				84C0DE032FE7000000000003 /* ReadOnlyData.cpp in Sources */,
+				84C0DE042FE7000000000004 /* WriteOnlyData.cpp in Sources */,
+				84C0DE052FE7000000000005 /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

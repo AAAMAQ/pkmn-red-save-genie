@@ -173,6 +173,7 @@ public:
 
     static constexpr std::size_t OptionsOff       = 0x2601;
     static constexpr std::size_t BadgesOff        = 0x2602;
+    static constexpr std::size_t BadgesMirrorOff  = 0x29D6; // duplicate badge bitfield used by the game
     static constexpr std::size_t LetterDelayOff   = 0x2604;
 
     static constexpr std::size_t TrainerIdOff     = 0x2605; // u16 not little-endian but big-endian
@@ -185,6 +186,60 @@ public:
     // Note: some docs list X/Y swapped; we follow Bulbapedia Gen I save structure.
     static constexpr std::size_t YCoordOff        = 0x260D;
     static constexpr std::size_t XCoordOff        = 0x260E;
+    static constexpr std::size_t YBlockCoordOff   = 0x260F;
+    static constexpr std::size_t XBlockCoordOff   = 0x2610;
+
+    // Player/overworld state offsets used for read-only diagnostics.
+    // Reference: junebug12851/pokered-save-editor and pokered-save-editor-2.
+    static constexpr std::size_t SpecialWarpYOff       = 0x278E;
+    static constexpr std::size_t SpecialWarpXOff       = 0x278F;
+    static constexpr std::size_t PlayerMoveDirOff      = 0x27D4;
+    static constexpr std::size_t PlayerLastStopDirOff  = 0x27D5;
+    static constexpr std::size_t PlayerCurDirOff       = 0x27D6;
+
+    // World/story support ranges.
+    static constexpr std::size_t MissableObjectsOff    = 0x2852;
+    static constexpr std::size_t MissableObjectsLen    = 29;     // 228 used flags in Junebug v2
+    static constexpr int MissableObjectsUsedBits       = 228;
+
+    static constexpr std::size_t CurrentScriptsOff     = 0x289C;
+    static constexpr std::size_t CurrentScriptsLen     = 0x0100; // ends immediately before hidden items
+    static constexpr int CurrentScriptCount            = 97;
+
+    static constexpr std::size_t HiddenItemsOff        = 0x299C;
+    static constexpr std::size_t HiddenItemsLen        = 7;      // 54 used flags in Junebug v2
+    static constexpr int HiddenItemsUsedBits           = 54;
+
+    static constexpr std::size_t HiddenCoinsOff        = 0x29AA;
+    static constexpr std::size_t HiddenCoinsLen        = 2;      // 12 used flags in Junebug v2
+    static constexpr int HiddenCoinsUsedBits           = 12;
+
+    static constexpr std::size_t WalkBikeSurfOff       = 0x29AC;
+    static constexpr std::size_t VisitedTownsOff       = 0x29B7;
+    static constexpr std::size_t VisitedTownsLen       = 2;
+    static constexpr int VisitedTownsUsedBits          = 11;
+    static constexpr std::size_t SafariStepsOff        = 0x29B9; // big-endian word
+    static constexpr std::size_t PlayerJumpingYScreenOff = 0x29C0;
+
+    static constexpr std::size_t WorldFlags1Off        = 0x29D4;
+    static constexpr std::size_t BattleFlagsOff        = 0x29D9;
+    static constexpr std::size_t WorldFlags2Off        = 0x29DA;
+    static constexpr std::size_t TextFlagsOff          = 0x29DC;
+    static constexpr std::size_t PlaytimeFlagsOff      = 0x29DE;
+    static constexpr std::size_t FlyFlagsOff           = 0x29DF;
+    static constexpr std::size_t EliteFlagsOff         = 0x29E0;
+    static constexpr std::size_t DoorWarpFlagsOff      = 0x29E2;
+
+    static constexpr std::size_t EventFlagsOff         = 0x29F3;
+    static constexpr std::size_t EventFlagsLen         = 0x0140;
+
+    static constexpr std::size_t SafariGameOverOff     = 0x2CF2;
+    static constexpr std::size_t SafariBallCountOff    = 0x2CF3;
+
+    static constexpr std::size_t DaycareInUseOff       = 0x2CF4;
+    static constexpr std::size_t DaycareNicknameOff    = 0x2CF5;
+    static constexpr std::size_t DaycareOTNameOff      = 0x2D00;
+    static constexpr std::size_t DaycareBoxMonOff      = 0x2D0B;
 
     // Playtime region (hours / maxed byte / minutes / seconds / frames)
     static constexpr std::size_t PlayTimeHoursOff  = 0x2CED;
