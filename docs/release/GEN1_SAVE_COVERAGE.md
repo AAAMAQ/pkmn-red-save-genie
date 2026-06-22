@@ -2,6 +2,8 @@
 
 Date: 2026-06-20
 
+Status update: this detailed coverage map remains the authoritative range-level view for the Gen I Save Genie release. The Red-side project is complete for preservation and converter-source use because every standard SRAM byte is preserved/classified and the major transferable gameplay concepts are decoded. This document still intentionally distinguishes decoded gameplay data from runtime, scratch, padding, unused, and unknown bytes.
+
 This report tracks the current Save Genie understanding of the 32 KiB Gen I save range `0x0000-0x7FFF`. It is intentionally conservative: a range is only marked decoded when the current C++ reader exports or summarizes it.
 
 ## Coverage Status
@@ -78,13 +80,14 @@ This report tracks the current Save Genie understanding of the 32 KiB Gen I save
 
 ## Remaining Coverage Work
 
-- Replace broad `partially understood` regions with smaller named ranges from `pret/pokered`.
-- Validate named script/missable/hidden item/hidden coin/Fly destination output against real save-diff experiments.
-- Decide whether current-map warp/sign/sprite cache rows should be exported as structured objects or kept as runtime diagnostics.
-- Research whether any bytes in `0x3524-0x3FFF` have stable persistent meaning in Red/Blue saves; do not assign names without a source.
-- Convert broad story categories into a reviewed conversion-policy table before using them for Red-to-FireRed state writing.
-- Add automated coverage assertions so decoded ranges stay synchronized with source constants.
-- Keep FireRed/Gen III ranges out of this Gen I coverage report.
+- Optional refinement: replace some broad `partially understood` runtime ranges with smaller named ranges if future `pret/pokered` evidence proves stable user-facing meanings.
+- Optional refinement: decide whether current-map warp/sign/sprite cache rows should become structured diagnostics or remain raw-preserved runtime data.
+- Future research: determine whether bytes in `0x3524-0x3FFF` have stable persistent meaning in Red/Blue saves; do not assign names without a source.
+- Future converter work: translate broad story categories into FireRed target policies before writing FireRed state.
+- Maintenance: add automated coverage assertions if range definitions begin changing frequently.
+- Boundary: FireRed/Gen III ranges stay out of this Gen I coverage report.
+
+These items do not block the completed Red-side Save Genie milestone. They are refinements, future converter dependencies, or evidence-expansion tasks rather than missing source preservation.
 
 ## Reference Credits
 

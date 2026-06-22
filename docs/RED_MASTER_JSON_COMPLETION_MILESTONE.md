@@ -53,6 +53,8 @@ The Red side is complete because it now satisfies the core Save Genie requiremen
 
 The remaining draft fields are intentional and do not mean the Red decoder is incomplete.
 
+For public research-release documentation, MAQ's reported human verification, playtesting, emulator checks, and bug-testing results are accepted as release evidence unless current repository evidence contradicts them. Additional validation may improve confidence, but should not reopen the completed Red master JSON design without a concrete bug.
+
 ## Intentionally Deferred
 
 These are future conversion-policy or FireRed-side tasks, not blockers for the completed Red master JSON:
@@ -95,3 +97,12 @@ The next phase is not to redesign `.red.json`. The next phase is to build the Fi
 4. Finalize mapping tables and conversion policies.
 5. Generate converted FireRed saves.
 6. Validate converted saves in emulator and by save-again testing.
+
+## Public Release Documentation Links
+
+- `docs/PROJECT_PUBLIC_RESEARCH_RELEASE.md`: final public research-release conclusion and documentation map.
+- `docs/RED_MASTER_JSON_CONVENTION.md`: canonical `.red.json` schema and data-authority rules.
+- `docs/RED_MASTER_JSON_ROUND_TRIP.md`: reconstruction workflow and test harness.
+- `docs/RED_SAVE_COVERAGE.md`: master JSON coverage rules.
+- `docs/release/GEN1_SAVE_COVERAGE.md`: detailed Gen I byte-range coverage.
+- `docs/CONVERSION_MODEL.md`: Red-side conversion-source model.

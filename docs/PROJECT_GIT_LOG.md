@@ -4,9 +4,62 @@ This file records meaningful project commits and the engineering decisions behin
 
 Note: a commit cannot contain its own final hash without an amend or follow-up commit. When an entry is created in the same commit it describes, the exact hash is reported in the completion message and is visible through `git log`.
 
+## 2026-06-22 — Prepare project for public research release
+
+Commit hash: pending review and commit.
+
+Title: Prepare project for public research release
+
+Systems affected:
+
+- Public documentation structure.
+- Release conclusion and project status docs.
+- Git/history documentation location.
+- Personal Codex discussion memory handling.
+
+Files affected:
+
+- `README.md`
+- `.gitignore`
+- `docs/PROJECT_GIT_LOG.md`
+- `docs/PROJECT_PUBLIC_RESEARCH_RELEASE.md`
+- `docs/RED_MASTER_JSON_COMPLETION_MILESTONE.md`
+- `docs/RED_MASTER_JSON_CONVENTION.md`
+- `docs/RED_MASTER_JSON_ROUND_TRIP.md`
+- `docs/RED_SAVE_COVERAGE.md`
+- `docs/release/GEN1_SAVE_COVERAGE.md`
+- `docs/release/RELEASE_CHECKLIST.md`
+- `docs/research/PKMN_RED_SAVE_GENIE_RESEARCH_DOCUMENT.md`
+- `docs/research/PROJECT_TIMELINE.md`
+- `docs/research/REFERENCES.md`
+- `docs/research/OPEN_RESEARCH_QUESTIONS.md`
+- `docs/external_projects_deep_analysis.md`
+
+Test results:
+
+- Documentation-only pass; no production code changed.
+- Build/test rerun deferred unless requested after review.
+
+Important decisions:
+
+- The Red Save Genie is documented as complete for its intended Red-side research, verification, archival, and converter-source role.
+- `.red.json` remains stable unless a real bug is discovered.
+- Human-reported verification/playtesting/emulator results are accepted for this documentation pass unless contradicted by repository evidence.
+- FireRed `.fred.json`, FireRed reader/writer, Gen III serialization, conversion output, and emulator validation remain future phases.
+- `docs/CODEX_CHAT_VERIFICATION_AND_DISCUSSIONS.md` is personal and ignored; it must not be committed as a required public project document.
+
+Known limitations:
+
+- This pass does not add new parser behavior, tests, or FireRed support.
+- Broader public-release validation can still add evidence, but should not reopen the completed Red master JSON design without a concrete bug.
+
+Summary:
+
+This milestone prepares the repository for public research review by consolidating the final Red-side conclusion, correcting stale roadmap/status language, cross-linking authoritative docs, preserving project history under `docs/`, and separating private conversation memory from public documentation.
+
 ## 2026-06-22 — Complete Red master JSON and conversion-readiness milestone
 
-Commit hash: created by this milestone commit; see `git log --oneline` after commit.
+Commit hash: `929b6a0`
 
 Title: Complete Red master JSON and conversion-readiness milestone
 

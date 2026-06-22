@@ -416,10 +416,10 @@ Current implementation:
 | Trainer/rival name setters | Implemented with validation and Gen I encoding. |
 | Money/coins setters | Implemented with range validation and BCD writing. |
 | Badges setter | Implemented. |
-| Location setter | Implemented with map-table validation. |
+| Location setter | Present as a future placeholder but intentionally disabled for the Safe Editor MVP. |
 | Transaction-style `Apply()` | Implemented for MVP fields, fixes main checksum. |
 | Item list reading | Implemented internally. |
-| Item add/remove/quantity editing | Declared but returns not implemented. |
+| Existing item quantity editing | Implemented for existing bag and PC item entries; add/remove remain intentionally disabled. |
 | Pokemon editing | Placeholder returns not implemented. |
 | Checksum repair | Main checksum repair implemented for MVP bank 1 edits. |
 
@@ -791,7 +791,7 @@ Gen I map ID
 
 ## Part XVII - Safe Editor Research
 
-Future WriteOnlyData MVP should focus on:
+The Safe Editor MVP is intentionally conservative:
 
 | Edit target | Status |
 | --- | --- |
@@ -800,9 +800,10 @@ Future WriteOnlyData MVP should focus on:
 | Trainer name | Setter implemented. |
 | Rival name | Setter implemented. |
 | Badges | Setter implemented. |
-| Location | Setter implemented, should be used carefully. |
-| Bag quantities | Planned; item write methods not implemented. |
-| PC item quantities | Planned; item write methods not implemented. |
+| Location | Intentionally disabled; future map/location work requires additional story-state policy. |
+| Bag quantities | Existing item quantity editing implemented; no add/remove/reorder support. |
+| PC item quantities | Existing item quantity editing implemented; no add/remove/reorder support. |
+| Pokemon editing | Intentionally not implemented. |
 
 Safe editing rules:
 
@@ -896,7 +897,7 @@ Preservation value:
 Current completed milestone:
 
 ```text
-Gen I Save Genie reader/export foundation with party and PC box decoding.
+Gen I Save Genie Red-side source foundation with lossless .red.json, semantic decoding, Safe Editor MVP, and conversion-readiness metadata.
 ```
 
 Roadmap:
@@ -905,8 +906,8 @@ Roadmap:
 | --- | --- | --- | --- | --- | --- |
 | 1. Real-save validation pass | Validate PC boxes, current box cache, named event/world rows, and Safe Editor output against controlled saves/save diffs. | Current parser/export/tests. | Mistaking runtime cache bytes for stable state. | Emulator screenshots, byte diffs, decoded output comparison. | Confirmed real-save evidence for release-critical rows. |
 | 2. Text/validation polish | Improve unsupported-character reporting and malformed-save diagnostics. | Safe Editor and parser tests. | Silent lossy text handling. | Synthetic malformed fixtures and editor input tests. | Clear errors without crashes or silent replacement. |
-| 3. Freeze export schemas | Stabilize `PokemonBoxes.json`, `PokemonSummary.json`, `SaveGenieSummary.txt`, and future `.red.json` direction. | Current richer exports. | Summary bloat and schema churn. | JSON validation and snapshot review. | Documented schema version/field meanings. |
-| 4. Public Gen I release prep | Finish README, release checklist, limitations, generated-output docs, and no-ROM/no-save policy. | Release docs. | Overclaiming region/version support. | Manual release checklist. | First public Save Genie release candidate. |
+| 3. Public Gen I release polish | Keep README, release checklist, limitations, generated-output docs, and no-ROM/no-save policy aligned with the completed Red-side milestone. | Release docs. | Overclaiming region/version support. | Manual release checklist. | Public Save Genie release candidate. |
+| 4. Optional evidence expansion | Add more real-save examples and validation notes without redesigning `.red.json` absent a bug. | Current release docs. | Treating optional validation as a blocker. | Human/emulator validation logs. | Stronger public evidence base. |
 | 5. FireRed reader | Parse sections and trainer summary. | Gen III research. | Section rotation/save index. | Synthetic and real test saves. | Valid section map and summary. |
 | 6. FireRed writer | Unchanged round-trip then safe field edit. | Reader/checksum tests. | Corrupting active slot. | Emulator load. | Valid copied save. |
 | 7. Pokemon conversion adapter | Convert `PokemonMon` to Gen III Pokemon. | Gen III Pokemon codec and policy. | Legality/policy ambiguity. | Deterministic tests. | Reported conversion output. |
@@ -922,8 +923,8 @@ Roadmap:
 | Party Pokemon store visible stats. | Code and screenshot anchors. | Party stats can be exported directly. | `PokemonStats` populated for party. | Do not change offsets casually. |
 | Gen I uses proprietary text encoding. | Gen I save refs and codec code. | ASCII assumptions fail. | `Gen1TextCodec`. | Full glyph coverage future. |
 | PP bytes contain PP Ups in upper bits. | Project brain and code. | Current PP must be masked. | `rawPP & 0x3F`. | Base PP + PP Ups future. |
-| Current box cache is separate from permanent boxes. | Bulbapedia, `pret/pokered`, external analysis, constants. | Must decode cache separately. | Constants exist, getter future. | Which copy is authoritative in edge cases. |
-| Emulator saves may contain trailing bytes. | Generated output size `0x802c`. | Strict `0x8000` rejection would be too harsh. | Warn currently. | Formal trailing-byte policy future. |
+| Current box cache is separate from permanent boxes. | Bulbapedia, `pret/pokered`, external analysis, constants, current code. | Must decode cache separately. | `GetCurrentBoxCache()` implemented and exported separately. | Real-save cache/permanent sync edge cases remain useful validation. |
+| Emulator saves may contain trailing bytes. | Generated output size `0x802c` and `.red.json` tests. | Strict `0x8000` rejection would be too harsh. | `.red.json` preserves trailing bytes losslessly. | Meaning of trailing bytes remains unknown-preserved. |
 | Gen III saves are sectioned and redundant. | Bulbapedia Gen III and external analysis. | FireRed reader must select latest sections. | Future `Gen3SaveContainer`. | Exact FRLG edge cases. |
 | Location conversion is easier than full event conversion. | Zayaldrie advice. | Use safe spawn mapping first. | Future `LocationConversionMap`. | Extra location variables. |
 | Full flag mapping is central difficulty. | Gears/Zayaldrie advice and save refs. | Do not start with perfect story conversion. | Future `ProgressConversionMap`. | Many flag equivalents. |
@@ -1016,11 +1017,14 @@ Do not include ROMs or private saves in the repository.
 | March 26, 2026 | Gears advised AI is useful for mechanics but unreliable for niche internals. | Inspiration timeline. |
 | April 19, 2026 | Full Gen I Pokemon decode foundation: party, PC boxes, move lookup, JSON/text exports. | Git commit `e9e531b`; project brain. |
 | April 19, 2026 | Gears recommended FRLG symbol list for flag information after box decode milestone. | Inspiration timeline. |
-| Next | Verify PC box decode and add current box cache. | Project brain roadmap and this research pass. |
+| June 20, 2026 | Gen I release foundation: Safe Editor MVP, current box cache, event/trainer flags, tests, and release docs. | Git commit `8d3e911`. |
+| June 22, 2026 | Gen I world-state decoding expanded: current scripts, missables, hidden items, hidden coins, visited towns, Daycare/world fields. | Git commit `ade3701`. |
+| June 22, 2026 | Canonical `.red.json` master save and Red-side conversion-readiness milestone completed. | Git commit `929b6a0`. |
+| Next | FireRed `.fred.json` design and FireRed byte-identical round-trip research. | Current phase boundary docs. |
 
 ## Part XXV - Conclusion
 
-`pkmn-red-save-genie` is already a meaningful standalone result: a C++ Gen I save reader/exporter that decodes major Pokemon Red save structures into readable summaries and JSON. It is also the source-side foundation for a larger Red to FireRed whole-save conversion pipeline.
+`pkmn-red-save-genie` is a complete Red-side research result for its intended role: a C++ Gen I save reader/exporter, conservative Safe Editor, lossless `.red.json` archive, and conversion-ready semantic source model. It decodes the major transferable Pokemon Red save structures into readable data while preserving every original byte, including unknown/runtime/scratch regions and trailing bytes.
 
 The project is strongest when it follows the discipline that emerged from its research:
 
@@ -1033,7 +1037,7 @@ The project is strongest when it follows the discipline that emerged from its re
 | Safe save handling | Never overwrite original saves and repair checksums after edits. |
 | Preservation value | Treat user saves as historical personal data worth understanding and protecting. |
 
-The long-term converter appears feasible in pieces, but the hard parts remain: named flags, story-state mapping, FireRed save writing, Gen III Pokemon encoding, and Sevii/postgame consistency. The right path remains:
+The long-term converter appears feasible in pieces, but the remaining hard parts now belong primarily to the FireRed and cross-generation phases: `.fred.json`, FireRed section/save-slot handling, FireRed checksums, Gen III Pokemon encryption, target mapping tables, conversion reports, and emulator load/save-again validation. The right path remains:
 
 ```text
 Small verified steps. No blind guesses. Preserve the save.

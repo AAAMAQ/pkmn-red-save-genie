@@ -4,7 +4,7 @@ Project: `pkmn-red-save-genie`
 
 Creator: MAQ, Big MAQ Studio
 
-Last updated: 2026-06-19
+Last updated: 2026-06-22
 
 ## Primary Project Code Sources
 
@@ -20,9 +20,15 @@ Last updated: 2026-06-19
 | `Pkmn Red Save Genie/HPP Files/ReadOnlyData.hpp` | Save models and read-only API. |
 | `Pkmn Red Save Genie/CPP Files/WriteOnlyData.cpp` | Safe edit MVP implementation. |
 | `Pkmn Red Save Genie/HPP Files/WriteOnlyData.hpp` | Safe edit request/result API. |
-| `Pkmn Red Save Genie/CPP Files/main.cpp` | App flow and JSON/text export writers. |
+| `Pkmn Red Save Genie/CPP Files/main.cpp` | App flow, safe prompts, legacy exports, master `.red.json` export/reconstruction prompts. |
+| `Pkmn Red Save Genie/CPP Files/RedMasterJson.cpp` | Canonical `.red.json` export/import/validation/reconstruction and coverage/conversion sections. |
+| `Pkmn Red Save Genie/HPP Files/RedMasterJson.hpp` | Red master JSON API and result/options models. |
+| `Pkmn Red Save Genie/CPP Files/RedTestExports.cpp` | Legacy/test export writers for summary, boxes, and compact JSON. |
+| `Pkmn Red Save Genie/HPP Files/RedTestExports.hpp` | Legacy/test export API. |
 | `Pkmn Red Save Genie.xcodeproj/project.pbxproj` | Xcode project structure. |
 | `Pkmn Red Save Genie.xcodeproj/xcshareddata/xcschemes/Pkmn Red Save Genie.xcscheme` | Xcode scheme. |
+| `tests/savegenie_core_tests.cpp` | Synthetic core parser/editor/helper tests. |
+| `tests/red_master_json_tests.cpp` | `.red.json` round-trip, validation, semantic hierarchy, deterministic export, and collision tests. |
 
 ## Project Context and Planning Documents
 
@@ -31,6 +37,8 @@ Last updated: 2026-06-19
 | `Pkmn Red Save Genie/IMPORTANT PDF and other files IGNORE/pkmn_red_save_genie_project_brain.md` | Current project brain, operating manual, tested offsets, roadmap, regression anchors. |
 | `Pkmn Red Save Genie/IMPORTANT PDF and other files IGNORE/pkmn_red_save_genie_inspiration_and_references.md` | Inspiration links, expert advice, strategic context, timeline of Gears/Zayaldrie advice. |
 | `docs/external_projects_deep_analysis.md` | Detailed analysis of external projects and references. |
+| `docs/PROJECT_GIT_LOG.md` | Public milestone and commit decision log. |
+| `docs/PROJECT_PUBLIC_RESEARCH_RELEASE.md` | Final public research-release conclusion and authoritative documentation map. |
 | Current user documentation prompt, 2026-06-19 | Project-origin section: MAQ, Big MAQ Studio, uncle's Pokemon Red cartridge, battery repair, personal preservation motivation. |
 
 ## Supplied PDF Text Extracts
@@ -82,6 +90,9 @@ Note: ROM and save binaries in the reference folder were intentionally not used 
 | `9d80ba8` | 2026-03-05 | Add Code for Write only data | Safe editing layer. |
 | `7b5c0c4` | 2026-04-18 | Added Some Bug Fixes | Pre-milestone fixes. |
 | `e9e531b` | 2026-04-19 | Complete Gen I Pokemon decode (party + boxes), move lookup, and JSON/text exports | Current major milestone. |
+| `8d3e911` | 2026-06-20 | Advance Gen I Save Genie release foundation | Safe Editor MVP, current box cache, event/trainer flags, tests, release docs, and README updates. |
+| `ade3701` | 2026-06-22 | Expand Gen I world-state decoding | Current scripts, missables, hidden items/coins, visited towns, Daycare/world-state refinements, and coverage updates. |
+| `929b6a0` | 2026-06-22 | Complete Red master JSON conversion-ready milestone | Canonical `.red.json`, RedTestExports, schema, round-trip tests, conversion model, and Red-side completion docs. |
 
 ## External Projects and Repositories
 
@@ -95,7 +106,7 @@ Note: ROM and save binaries in the reference folder were intentionally not used 
 | Poke Transporter GB | https://github.com/Striaton-Lab-Team/Poke_Transporter_GB | `34732ca884cd0b400932a6552f042e5cf6109437` | Pokemon transfer, PCCS integration, Gen III save-sector write concepts. |
 | `pret/pokered` | https://github.com/pret/pokered | `d70d99ffbd329473d96eaaf19fd97c86d2220b7f` | Gen I SRAM, WRAM, save routines, event constants, maps, text, species/items/moves. |
 | `pret/pokefirered` | https://github.com/pret/pokefirered | `70b76a15df8c6a6dd03d7a09e8f9eddd2e4dc29d` | FireRed save sections, structs, flags, vars, maps, Pokemon data. |
-| Current public repo | https://github.com/AAAMAQ/pkmn-red-save-genie | Local `e9e531b99657704e128a723de9337b13420a4925` | Public project identity; local repo remains source of truth. |
+| Current public repo | https://github.com/AAAMAQ/pkmn-red-save-genie | Local `929b6a0` at this documentation pass; `origin/main` may lag behind local commits until pushed | Public project identity; local repo remains source of truth. |
 
 ## External Documentation and Web Sources
 

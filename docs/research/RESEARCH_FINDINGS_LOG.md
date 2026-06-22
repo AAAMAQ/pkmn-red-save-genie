@@ -325,3 +325,43 @@ Implementation impact: `WorldStateSummary` now includes `currentScripts`, `missa
 Validation: Synthetic tests assert named entries for Prof. Oak, Articuno, S.S. Anne Kitchen hidden item, Game Corner hidden coins, Pallet Town/Saffron City Fly flags, and the Blues House current-script value.
 
 Remaining questions: Current-map warp entries, sign rows, cached sprite rows, enemy/link union data, and the post-checksum `0x3524-0x3FFF` range still need research before any stronger completeness claim.
+
+## Finding R-017 - Physical Image Must Remain The Reconstruction Authority
+
+Date: 2026-06-22
+
+Status: Implemented and verified for the Red-side `.red.json` milestone
+
+Source: `RedMasterJson`; `tests/red_master_json_tests.cpp`; `docs/RED_MASTER_JSON_CONVENTION.md`; `docs/RED_MASTER_JSON_ROUND_TRIP.md`
+
+Evidence: Synthetic standard, trailing-byte, and semantic fixtures reconstruct with zero byte differences. `physicalImage.standardSramHex` and `physicalImage.trailingDataHex` preserve the source bytes directly.
+
+Previous assumption: A future master export might eventually be rebuilt from decoded semantic objects.
+
+Finding: No-edit reconstruction must use the physical byte image, not decoded semantic fields. Decoded fields are inspection and conversion-source data, not the archival authority.
+
+Implementation impact: `.red.json` contains both `physicalImage` and `decoded`. Semantic expansion cannot corrupt no-edit reconstruction. Unknown, runtime, scratch, and trailing bytes remain preserved even when not fully interpreted.
+
+Validation: `red_master_json_tests` verifies byte-identical reconstruction and semantic expansion guardrails.
+
+Remaining questions: Future edited reconstruction must define explicit semantic edit application rules before altering raw bytes.
+
+## Finding R-018 - Red-Side Conversion Readiness Is Complete Before FireRed Work Begins
+
+Date: 2026-06-22
+
+Status: Implemented as Red-side source foundation
+
+Source: `docs/RED_MASTER_JSON_COMPLETION_MILESTONE.md`; `docs/PROJECT_PUBLIC_RESEARCH_RELEASE.md`; `docs/CONVERSION_MODEL.md`; `docs/RED_TO_FIRERED_MAPPING.md`
+
+Evidence: `.red.json` exports decoded gameplay data and a top-level `conversionModel`. Concepts are classified as direct transfer, semantic translation, Red-only preservation, or unsupported/policy-required.
+
+Previous assumption: More Red-side expansion might be needed before beginning FireRed research.
+
+Finding: The Red source side is complete enough for the converter foundation. Further work should focus on FireRed `.fred.json`, FireRed reader/writer, Gen III Pokémon serialization, and emulator validation rather than redesigning `.red.json`.
+
+Implementation impact: Red Save Genie documentation now marks `.red.json` stable unless a real bug is found. FireRed tasks are explicitly future-phase items.
+
+Validation: Repository tests verify Red round-trip behavior. Human-reported playtesting/emulator/bug-testing results are accepted for the documentation release pass unless contradicted by repository evidence.
+
+Remaining questions: FireRed section handling, Pokémon encryption, target mappings, and converted-save validation remain open.

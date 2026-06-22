@@ -271,15 +271,39 @@ Milestone: Save Genie expanded from mostly read-only Pokemon/trainer exports int
 
 Technical significance: This moved Phase 3 Gen I completeness substantially forward while keeping risky story/Pokemon/location editing out of scope.
 
+## June 22, 2026 - Red Master JSON and Conversion-Readiness Milestone
+
+Evidence: commit `929b6a0`, `RedMasterJson`, `RedTestExports`, `tests/red_master_json_tests.cpp`, `docs/RED_MASTER_JSON_COMPLETION_MILESTONE.md`, `docs/RED_MASTER_JSON_CONVENTION.md`, `docs/RED_MASTER_JSON_ROUND_TRIP.md`, `docs/RED_SAVE_COVERAGE.md`, `docs/schema/pokemon-red-master-save.schema.json`
+
+Milestone: Save Genie gained the canonical `.red.json` master-save system:
+
+| Area | Result |
+| --- | --- |
+| Lossless physical image | Full standard SRAM plus trailing bytes preserved as canonical uppercase continuous hex. |
+| Reconstruction | `.red.json` reconstructs byte-identically in synthetic standard, trailing-byte, and semantic fixtures. |
+| Semantic model | `decoded` hierarchy normalizes major gameplay data from legacy exports and parser models. |
+| Conversion readiness | Top-level `conversionModel` classifies Red concepts for future shared-model and FireRed work. |
+| Coverage | Master JSON reports zero uncovered standard SRAM bytes and zero accidental primary overlaps. |
+
+Technical significance: This completed the Red-side source model. Future converter work should begin with FireRed `.fred.json` and FireRed byte-identical round-trip research, not by redesigning `.red.json` without a bug.
+
+## June 22, 2026 - Public Research Release Documentation Pass
+
+Evidence: `docs/PROJECT_PUBLIC_RESEARCH_RELEASE.md`, `docs/PROJECT_GIT_LOG.md`, README release-status update, release checklist and coverage updates.
+
+Milestone: Documentation was aligned around the final conclusion that Pokémon Red Save Genie is complete for its intended Red-side research, verification, archival, safe-edit MVP, and converter-source role.
+
+Technical significance: This pass separates verified repository evidence, accepted human verification, informed interpretation, and future FireRed work so future contributors can resume from docs rather than conversation history.
+
 ## Next Planned Milestones
 
 | Order | Milestone | Evidence |
 | --- | --- | --- |
-| 1 | Validate PC boxes, current box cache, named world-state rows, and Safe Editor against real saves/save diffs. | Current synthetic tests plus project brain validation method. |
-| 2 | Finish text-codec polish and user-facing validation/error reporting. | Safe Editor and release-readiness roadmap. |
-| 3 | Freeze export schemas, including future `.red.json` direction. | Junebug analysis and converter roadmap. |
-| 4 | Complete README/release documentation and release checklist. | Gen I public release plan. |
-| 5 | Begin FireRed reader. | Gen III research roadmap. |
+| 1 | Expand public validation evidence if desired. | Human/emulator validation logs, screenshots, save-diff notes, and release checklist. |
+| 2 | Add optional release packaging or CI. | Existing test harness and Xcode build. |
+| 3 | Begin FireRed `.fred.json` design. | Gen III research docs and `pret/pokefirered`. |
+| 4 | Implement FireRed reader with byte-identical round trip. | FireRed section/checksum/save-slot research. |
+| 5 | Begin conversion implementation only after FireRed round trip is proven. | Red `.red.json` source model plus future FireRed source/target model. |
 | 6 | Begin FireRed writer. | Gen III research roadmap. |
 | 7 | Integrate Pokemon conversion adapter. | PCCS/Poke Transporter research. |
 | 8 | Build limited whole-save conversion proof. | Long-term converter roadmap. |

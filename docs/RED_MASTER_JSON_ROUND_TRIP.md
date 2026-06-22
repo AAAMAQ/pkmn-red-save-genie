@@ -1,6 +1,6 @@
 # Red Master JSON Round Trip
 
-Status: draft
+Status: complete for Red-side `.red.json` milestone
 Schema version: `0.1.0`
 
 ## Goal
@@ -82,3 +82,7 @@ The current synthetic test harness verifies:
 | `semantic.sav` | `0x8000` | `0x8000` | zero byte differences after expanded decoded export |
 
 Use the command-line test output as the authoritative current result for exact hashes because temporary synthetic fixtures are regenerated on each run.
+
+## Public Release Interpretation
+
+The round-trip system is considered complete for the Pokémon Red source side. Additional real-save regression cases are welcome evidence, but the completed design should not be reopened unless reconstruction fails, hash validation fails, trailing bytes are lost, or a decoded semantic section is proven inconsistent with the physical image.

@@ -38,3 +38,7 @@ SaveGenieSummary.txt
 *.red.json
 *.fred.json
 [RECONSTRUCTED]*
+
+# Personal/local Codex discussion memory (not a public project document)
+CODEX_CHAT_VERIFICATION_AND_DISCUSSIONS.md
+docs/CODEX_CHAT_VERIFICATION_AND_DISCUSSIONS.md

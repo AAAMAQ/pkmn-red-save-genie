@@ -1,8 +1,10 @@
 # 🧬 Pkmn Red Save Genie
 
-A full-structure Pokémon Red (Generation I) save file reader and safe editor built in modern C++.
+A Pokémon Red (Generation I) save research, validation, export, and safe-editing tool built in modern C++.
 
-Pkmn Red Save Genie reverse-engineers the complete Gen I `.sav` format across all banks and transforms raw binary data into structured, human-readable English while preserving file integrity and checksum correctness.
+Pkmn Red Save Genie preserves the full Gen I `.sav` byte image, decodes the major gameplay concepts into readable data, exports a canonical lossless `.red.json` master save, and provides a conservative Safe Editor for a small set of well-understood fields.
+
+The project intentionally does **not** invent meanings for every runtime, scratch, unused, or unknown byte. Those bytes are preserved and classified so future research can continue without data loss.
 
 ---
 
@@ -19,7 +21,7 @@ Pokémon Red (1996, Game Boy) stores game progress inside a 32KB SRAM save file 
 - Monetary values (BCD encoded)  
 - Checksum validation bytes  
 
-This project reconstructs that internal structure in C++ using a layered, object-oriented architecture.
+This project reconstructs the meaningful source-side structure in C++ using a layered, object-oriented architecture while preserving the exact original file bytes for archival round trips.
 
 The system does **not** distribute ROMs or copyrighted data.
 
@@ -27,12 +29,29 @@ The system does **not** distribute ROMs or copyrighted data.
 
 ## Release Status
 
-The current Gen I Save Genie release path is tracked in:
+The Pokémon Red / Gen I side is complete for its intended research, verification, and converter-source role.
+
+Complete Red-side milestones:
+
+- Read-only parser/exporter for major Gen I gameplay data.
+- Conservative Safe Editor MVP for money, coins, trainer/rival names, badges, and existing item quantities.
+- Current box cache, Daycare, world-state, event, trainer, story, hidden item/coin, visited-town, and Hall of Fame decoding.
+- Canonical `.red.json` master-save export with byte-identical reconstruction.
+- Full `0x0000-0x7FFF` byte preservation and coverage classification.
+- Conversion-ready Red semantic model for the future Red-to-FireRed pipeline.
+
+Authoritative public docs:
 
 - `docs/release/GEN1_SAVE_COVERAGE.md`
 - `docs/release/RELEASE_CHECKLIST.md`
+- `docs/PROJECT_PUBLIC_RESEARCH_RELEASE.md`
+- `docs/RED_MASTER_JSON_COMPLETION_MILESTONE.md`
+- `docs/RED_MASTER_JSON_CONVENTION.md`
+- `docs/RED_MASTER_JSON_ROUND_TRIP.md`
+- `docs/RED_SAVE_COVERAGE.md`
+- `docs/CONVERSION_MODEL.md`
 
-The Gen I reader/exporter is the current production focus. FireRed save writing, PCCS integration, and whole-save Red-to-FireRed conversion remain future project phases and are not required for the first Save Genie release.
+FireRed save writing, `.fred.json`, Gen III Pokémon serialization, and whole-save Red-to-FireRed conversion remain future project phases and are not part of the completed Red Save Genie milestone.
 
 ## Credits And Research References
 
@@ -72,6 +91,17 @@ main.cpp
 │     - HallOfFame parsing
 │     - Plain-English translation layer
 │
+├── RedTestExports
+│     - SaveGenieSummary.txt
+│     - PokemonBoxes.json
+│     - PokemonSummary.json
+│
+├── RedMasterJson
+│     - Canonical .red.json export/import
+│     - SHA-256 and physical image validation
+│     - Byte-identical reconstruction
+│     - Coverage and conversion-readiness sections
+│
 └── WriteOnlyData
       - Safe mutation layer
       - Strict validation
@@ -85,6 +115,7 @@ main.cpp
 - No blind hex editing  
 - Every edit goes through validation  
 - Every mutation repairs checksums  
+- No-edit `.red.json` reconstruction uses raw `physicalImage`, not decoded fields
 
 ---
 
@@ -103,6 +134,10 @@ main.cpp
 
 ### ✅ PC Box Analysis
 
+- Party Pokémon decode with species, nicknames, Original Trainer data, EXP, level, moves, PP, DVs, Stat Experience, and party live stats
+- Permanent PC Boxes 1-12
+- Current box cache at `0x30C0`
+- Daycare Pokémon where present
 - Per-box Pokémon count
 - Average level calculation
 - Structured Pokémon entry parsing
@@ -143,6 +178,16 @@ main.cpp
 - Per-box checksum verification
 - Automatic checksum repair on edits
 
+### ✅ Canonical `.red.json`
+
+- Preserves the full `0x8000` standard SRAM region
+- Preserves trailing bytes beyond `0x8000`
+- Stores canonical uppercase continuous hex in `physicalImage`
+- Reconstructs `[RECONSTRUCTED] <save-name>.sav` byte-identically
+- Includes SHA-256 hashes for source, standard SRAM, and trailing data
+- Includes decoded semantic data and a conversion-ready Red source model
+- Keeps unknown/runtime/scratch bytes preserved instead of pretending they are fully understood
+
 ---
 
 ## 🧠 Technical Concepts Implemented
@@ -153,6 +198,9 @@ main.cpp
 - Endianness correction (LE / BE)
 - Bitfield decoding
 - BCD numeric decoding
+- Gen I custom text decoding and safe encoding for supported editor fields
+- Lossless raw-byte archival export
+- SHA-256 validation through the Red master JSON system
 - Safe buffer bounds enforcement
 - Defensive parsing for unverified regions
 - Object-oriented modular design
@@ -174,21 +222,31 @@ The system models all Gen I save banks:
 - Event flags
 - Map data
 - Pokédex
+- Current box cache
+- Daycare
+- World/story/runtime state diagnostics
 
 ### Bank 2 & 3
 - PC Boxes
 - Box checksums
 - Bank-level checksums
 
+Coverage distinction:
+
+- Every byte from `0x0000` through `0x7FFF` is preserved and classified.
+- Major transferable gameplay concepts are decoded.
+- Some runtime, scratch, padding, unused, and unknown regions are intentionally preserved without fake English meanings.
+
 ---
 
 ## 🛡 Safety Guarantees
 
-- Always creates `(BACKUP) <filename>.sav`
+- Offers backup creation before writing user-facing outputs
 - Never overwrites original save
 - Generates `(EDITED) <filename>.sav`
-- Performs strict size validation (0x8000 bytes expected)
+- Accepts standard `0x8000` saves and preserves trailing bytes in larger emulator/cartridge-dump files
 - Verifies checksum before and after edits
+- Writes reconstructed saves with collision-safe names
 
 ---
 
@@ -238,13 +296,25 @@ Rather than editing raw hex blindly, Pkmn Red Save Genie treats the save file as
 
 ## 📌 Future Roadmap
 
-- Full party Pokémon stat decoding
-- Complete PC Box Pokémon decoding
-- Species name lookup integration
-- Move set decoding
-- Item inventory parsing
-- CLI command support
-- WebAssembly build for browser-based editing
+Completed for the Red-side Save Genie milestone:
+
+- Full source-byte preservation through `.red.json`
+- Major Gen I gameplay decoding
+- Safe Editor MVP
+- Current box cache
+- Event/trainer/world-state decoding
+- Coverage classification
+- Conversion-ready Red semantic model
+
+Future phases:
+
+- Broader real-save regression corpus and release packaging
+- Optional UI/Web/WASM presentation layer
+- `.fred.json` FireRed master-save format
+- FireRed save reader/writer
+- Gen III Pokémon encryption/serialization
+- Red-to-FireRed mapping tables and conversion reports
+- Emulator load/save-again validation for converted FireRed saves
 
 ---
 
@@ -331,13 +401,16 @@ Execute:
 The program will:
 
 - Load the save file
-- Create a backup:
+- Offer to create a backup:
   ```
   (BACKUP) <yourfile>.sav
   ```
 - Validate the save structure
 - Display a full readable summary
 - Verify checksum integrity
+- Optionally write legacy/test exports
+- Optionally write canonical `.red.json`
+- Optionally reconstruct the `.red.json` into a byte-identical `[RECONSTRUCTED] <yourfile>.sav`
 
 If editing mode is enabled, it will create:
 
@@ -352,6 +425,7 @@ Your original save file will never be overwritten.
 ## 🔒 Safety Notes
 
 - The original save file is never modified.
-- A backup is always created before edits.
+- A backup is recommended before edits.
 - Checksums are validated and repaired automatically.
-- Only properly structured 32KB Gen I save files are supported.
+- Files shorter than `0x8000` are rejected.
+- Files larger than `0x8000` are decoded using the first `0x8000` bytes and preserve trailing bytes unchanged in `.red.json`.

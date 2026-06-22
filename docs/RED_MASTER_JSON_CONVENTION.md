@@ -1,6 +1,6 @@
 # Pokemon Red Master JSON Convention
 
-Status: draft
+Status: Red-side complete; draft schema
 Schema version: `0.1.0`
 Canonical extension: `.red.json`
 
@@ -32,7 +32,7 @@ The development schema uses:
 }
 ```
 
-Do not promote this to `1.0.0` until round-trip tests, schema review, coverage documentation, and semantic-model review are complete.
+Do not promote this to `1.0.0` until a future public schema-freeze review. The `0.1.0` schema is complete for the current Red-side Save Genie milestone, but it remains versioned as a draft so future FireRed/converter requirements can add compatible fields carefully.
 
 ## Canonical Byte Encoding
 
@@ -158,7 +158,7 @@ Legacy exports remain available through `RedTestExports` for regression/debuggin
 
 This section intentionally avoids FireRed save offsets. It classifies concepts as `directTransfer`, `semanticTranslation`, `redOnlyPreservation`, or `unsupportedOrPolicyRequired`, and records mapping policies for species, moves, items, text, status, DVs/IVs, Stat Experience/EVs, and generated Gen III Pokémon fields.
 
-Current status: Red-side conversion-readiness draft. FireRed `.fred.json`, FireRed section writing, Pokémon encryption, and converted-save generation are not implemented yet.
+Current status: Red-side conversion-readiness is complete for source modeling. FireRed `.fred.json`, FireRed section writing, Pokémon encryption, and converted-save generation are not implemented yet.
 
 ## Versioning
 
@@ -171,3 +171,7 @@ Current status: Red-side conversion-readiness draft. FireRed `.fred.json`, FireR
 ## External Credit
 
 Save Genie uses current local source code as the implementation authority. Research and cross-checking are informed by pret/pokered and Junebug's Pokémon Red save editor repositories. External code should not be copied unless licensing permits it and attribution is recorded.
+
+## Public Release Boundary
+
+The `.red.json` design should be treated as stable for Red-side preservation and conversion-source use unless a real bug is found. Future work should extend the pipeline through `.fred.json` and FireRed reader/writer modules rather than redesigning the Red master format without evidence.

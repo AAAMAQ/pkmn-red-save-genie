@@ -6,6 +6,8 @@ Repository under development: `pkmn-red-save-genie`
 
 Local project rule: the checked-out local repository is the source of truth for current behavior. External projects are reference material unless explicitly integrated later.
 
+Status note, 2026-06-22: this document is a historical research analysis from before the later Gen I release-foundation, world-state, and `.red.json` milestones. Its repository comparisons remain useful, but some gap tables are superseded by later commits. Current box cache, Safe Editor MVP, event/trainer labels, world-state decoding, coverage documentation, and canonical `.red.json` are now implemented. See `docs/PROJECT_PUBLIC_RESEARCH_RELEASE.md`, `docs/RED_MASTER_JSON_COMPLETION_MILESTONE.md`, and `docs/release/GEN1_SAVE_COVERAGE.md` for current status.
+
 Claim labels used in this document:
 
 | Label | Meaning |

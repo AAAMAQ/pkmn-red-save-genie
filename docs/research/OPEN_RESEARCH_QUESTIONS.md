@@ -4,7 +4,9 @@ Project: `pkmn-red-save-genie`
 
 Creator: MAQ, Big MAQ Studio
 
-Last updated: 2026-06-19
+Last updated: 2026-06-22
+
+Status note: questions in this file are retained as research history. Several Gen I questions are now answered for the completed Red-side Save Genie and `.red.json` source role, while broader corpus validation or FireRed target mapping may remain future work.
 
 ## Q-GEN1-001 - How should unsupported Gen I text bytes be normalized?
 
@@ -20,7 +22,7 @@ Experiment needed: Generate byte fixtures for the full known charmap and verify 
 
 Priority: Medium
 
-Status: Open
+Status: Mostly answered for current Save Genie support; broader glyph coverage remains optional/future polish.
 
 ## Q-GEN1-002 - How should regional save differences be detected?
 
@@ -36,7 +38,7 @@ Experiment needed: Build layout profiles and detect version/region by safe signa
 
 Priority: Medium
 
-Status: Open
+Status: Open for multi-region support. The completed Red-side milestone assumes English/USA-Europe style Pokémon Red/Blue-compatible saves unless later verified.
 
 ## Q-GEN1-003 - Should current box cache or permanent box copy be authoritative?
 
@@ -52,7 +54,7 @@ Experiment needed: Compare a save before and after depositing/withdrawing Pokemo
 
 Priority: Critical
 
-Status: Open
+Status: Answered for export architecture: Save Genie exports current box cache separately and records synchronization metadata. Broader real-save edge-case validation remains useful.
 
 ## Q-GEN1-004 - Is the boxed Pokemon level offset correct in current code?
 
@@ -68,7 +70,7 @@ Experiment needed: Create a controlled box with known level Pokemon, save, dump 
 
 Priority: Critical
 
-Status: Open
+Status: Accepted as verified for the completed Red-side source role based on current implementation and reported human validation. Additional real-save corpus testing remains useful evidence expansion.
 
 ## Q-GEN1-005 - Which Gen I save ranges are decoded, known, unused, or unknown?
 
@@ -84,7 +86,7 @@ Experiment needed: Validate the current coverage map against real save-diff expe
 
 Priority: Medium
 
-Status: Partially answered for Gen I release coverage; still open for real-save validation and deeper runtime/cache interpretation.
+Status: Answered for preservation and converter-source coverage: every standard SRAM byte is preserved/classified. Deeper runtime/cache English interpretation remains optional research.
 
 ## Q-FLAG-001 - Which Gen I event flags correspond to defeated trainers?
 
@@ -100,7 +102,7 @@ Experiment needed: Validate a broad trainer set against real save diffs and add 
 
 Priority: Critical
 
-Status: Partially answered for Gen I read-only decoding; still open for save-diff validation and FireRed conversion mapping.
+Status: Answered for Gen I read-only decoding and Red-side `.red.json` source modeling. FireRed conversion mapping remains open under Q-FLAG-002.
 
 ## Q-FLAG-002 - Which FireRed flags correspond to Gen I trainer and story events?
 

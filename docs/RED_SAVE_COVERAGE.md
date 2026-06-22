@@ -1,6 +1,6 @@
 # Pokemon Red Save Coverage Map
 
-Status: draft for `.red.json` schema `0.1.0`
+Status: complete preservation coverage for `.red.json` schema `0.1.0`
 
 The master JSON coverage system must cover every standard SRAM byte from `0x0000` through `0x7FFF`. Unknown data is allowed, but uncovered data is not.
 
@@ -36,4 +36,4 @@ This coverage map proves preservation, not complete English translation. Several
 
 The current `decoded` hierarchy exports the major implemented Save Genie models: trainer/rival, options/playtime, money/coins, badges, location/runtime state, Pokédex, inventory, party, PC storage, current box cache, daycare, Hall of Fame, named events, trainer/static/story categories, scripts, missable objects, hidden items, hidden coins, visited towns, world state, and checksum statuses.
 
-Future work should refine Bank 1 runtime fields, script semantics, missable-object categories, hidden-item categories, and unused/unknown bank tails as more pret/pokered-backed metadata is imported.
+Future research may refine Bank 1 runtime fields, script semantics, missable-object categories, hidden-item categories, and unused/unknown bank tails as more `pret/pokered`-backed metadata is verified. These refinements are not required for the completed Red-side converter-source role because the bytes are already preserved and classified.

@@ -1,13 +1,15 @@
 # Conversion Validation
 
-Status: draft validation plan
+Status: Red source validation complete; FireRed/converter validation planned
 
 ## Current Verified Foundation
 
 - Red `.sav -> .red.json -> .sav` byte-identical reconstruction.
 - Red trailing-byte preservation.
 - Red decoded semantic model.
-- Red-side `conversionModel` draft.
+- Red-side `conversionModel` complete for source modeling.
+
+These Red-side results do not prove a reliable Red-to-FireRed converter. They prove the source model that the future converter should consume.
 
 ## Required Before Reliable Converter Claim
 

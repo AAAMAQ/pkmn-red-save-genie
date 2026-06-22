@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://bigmaqstudio.local/schema/pokemon-red-master-save.schema.json",
   "title": "Pokemon Red Master Save JSON",
-  "description": "Draft schema for the lossless .red.json Pokemon Red save representation.",
+  "description": "Draft 0.1.0 schema for the completed Red-side lossless .red.json Pokemon Red master-save representation.",
   "type": "object",
   "required": [
     "schema",

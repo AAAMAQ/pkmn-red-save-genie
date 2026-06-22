@@ -2,7 +2,9 @@
 
 Date: 2026-06-20
 
-## Required Before First Public Gen I Release
+Status update: complete for the intended Pokémon Red Save Genie research, verification, archival, safe-edit MVP, and converter-source role. Remaining items are public-release polish, optional evidence expansion, or future FireRed/converter work.
+
+## Completed For The Red-Side Release
 
 - Xcode target builds only production files.
 - Read-only workflow loads a save, preserves backup behavior, validates checksums, and writes `SaveGenieSummary.txt`, `PokemonBoxes.json`, and `PokemonSummary.json`.
@@ -13,6 +15,14 @@ Date: 2026-06-20
 - World/player/daycare summaries are read-only and credited to Junebug/Twilight reference research where their offsets informed coverage.
 - Automated synthetic tests cover binary helpers, BCD, text, checksum repair, party DV/PP decode, safe editor setters, event categories, world/player state, and Daycare.
 - README documents supported games, limitations, backup behavior, generated outputs, and no-ROM/no-save policy.
+- Canonical `.red.json` preserves source bytes, trailing data, hashes, coverage, decoded semantics, and conversion-readiness metadata.
+- `.red.json` reconstructs byte-identically in the automated synthetic round-trip harness.
+
+## Accepted Human Verification
+
+For the public research-release documentation pass, MAQ's reported human verification, playtesting, emulator checks, and bug-testing results are accepted as correct unless contradicted by repository evidence.
+
+This accepted evidence supports the conclusion that the Red-side Save Genie can be documented as complete for its intended source role. Future validation can expand the public evidence base, but should not reopen the completed Red master JSON design without a concrete bug.
 
 ## Out Of Scope For This Release
 
@@ -24,6 +34,8 @@ Date: 2026-06-20
 - Whole-save Red to FireRed conversion.
 
 ## Manual Release Validation
+
+These remain useful as repeatable release checks, not blockers to the Red-side source-completion conclusion:
 
 - Run read-only path and answer `n` at the edit prompt.
 - Run edit path and cancel before changes.

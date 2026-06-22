@@ -1,6 +1,6 @@
 # Shared Conversion Model
 
-Status: draft Red-side model
+Status: complete Red-side source model; FireRed target model planned
 Current implementation: `.red.json` contains a top-level `conversionModel` section.
 
 ## Purpose
@@ -50,4 +50,6 @@ The current `.red.json` `conversionModel` includes:
 
 ## Current Boundary
 
-This document describes the Red source model only. It does not claim a FireRed writer or reliable converted save exists yet.
+This document describes the completed Red source model only. It does not claim a FireRed writer or reliable converted save exists yet.
+
+The next converter milestone is not more Red model redesign. It is proving the FireRed side with `.fred.json`, FireRed save-slot/section parsing, checksums, Gen III Pokémon serialization, and emulator validation.
