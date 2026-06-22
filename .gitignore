@@ -35,3 +35,6 @@ tmp/
 PokemonBoxes.json
 PokemonSummary.json
 SaveGenieSummary.txt
+*.red.json
+*.fred.json
+[RECONSTRUCTED]*

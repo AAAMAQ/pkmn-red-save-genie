@@ -12,6 +12,8 @@
 		84C0DE032FE7000000000003 /* ReadOnlyData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84C0DE122FE7000000000003 /* ReadOnlyData.cpp */; };
 		84C0DE042FE7000000000004 /* WriteOnlyData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84C0DE132FE7000000000004 /* WriteOnlyData.cpp */; };
 		84C0DE052FE7000000000005 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84C0DE142FE7000000000005 /* main.cpp */; };
+		84C0DE062FE700000000000A /* RedMasterJson.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84C0DE192FE700000000000A /* RedMasterJson.cpp */; };
+		84C0DE072FE700000000000B /* RedTestExports.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84C0DE1A2FE700000000000B /* RedTestExports.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -37,6 +39,10 @@
 		84C0DE162FE7000000000007 /* SaveStructure.hpp */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.cpp.h"; path = SaveStructure.hpp; sourceTree = "<group>"; };
 		84C0DE172FE7000000000008 /* ReadOnlyData.hpp */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.cpp.h"; path = ReadOnlyData.hpp; sourceTree = "<group>"; };
 		84C0DE182FE7000000000009 /* WriteOnlyData.hpp */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.cpp.h"; path = WriteOnlyData.hpp; sourceTree = "<group>"; };
+		84C0DE192FE700000000000A /* RedMasterJson.cpp */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.cpp.cpp"; path = RedMasterJson.cpp; sourceTree = "<group>"; };
+		84C0DE1A2FE700000000000B /* RedTestExports.cpp */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.cpp.cpp"; path = RedTestExports.cpp; sourceTree = "<group>"; };
+		84C0DE1B2FE700000000000C /* RedMasterJson.hpp */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.cpp.h"; path = RedMasterJson.hpp; sourceTree = "<group>"; };
+		84C0DE1C2FE700000000000D /* RedTestExports.hpp */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.cpp.h"; path = RedTestExports.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -80,6 +86,8 @@
 			children = (
 				84C0DE102FE7000000000001 /* FileManipulation.cpp */,
 				84C0DE122FE7000000000003 /* ReadOnlyData.cpp */,
+				84C0DE192FE700000000000A /* RedMasterJson.cpp */,
+				84C0DE1A2FE700000000000B /* RedTestExports.cpp */,
 				84C0DE112FE7000000000002 /* SaveStructure.cpp */,
 				84C0DE132FE7000000000004 /* WriteOnlyData.cpp */,
 				84C0DE142FE7000000000005 /* main.cpp */,
@@ -92,6 +100,8 @@
 			children = (
 				84C0DE152FE7000000000006 /* FileManipulation.hpp */,
 				84C0DE172FE7000000000008 /* ReadOnlyData.hpp */,
+				84C0DE1B2FE700000000000C /* RedMasterJson.hpp */,
+				84C0DE1C2FE700000000000D /* RedTestExports.hpp */,
 				84C0DE162FE7000000000007 /* SaveStructure.hpp */,
 				84C0DE182FE7000000000009 /* WriteOnlyData.hpp */,
 			);
@@ -162,6 +172,8 @@
 				84C0DE022FE7000000000002 /* SaveStructure.cpp in Sources */,
 				84C0DE032FE7000000000003 /* ReadOnlyData.cpp in Sources */,
 				84C0DE042FE7000000000004 /* WriteOnlyData.cpp in Sources */,
+				84C0DE062FE700000000000A /* RedMasterJson.cpp in Sources */,
+				84C0DE072FE700000000000B /* RedTestExports.cpp in Sources */,
 				84C0DE052FE7000000000005 /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

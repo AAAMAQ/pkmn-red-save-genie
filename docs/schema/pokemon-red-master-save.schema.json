@@ -1,0 +1,290 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bigmaqstudio.local/schema/pokemon-red-master-save.schema.json",
+  "title": "Pokemon Red Master Save JSON",
+  "description": "Draft schema for the lossless .red.json Pokemon Red save representation.",
+  "type": "object",
+  "required": [
+    "schema",
+    "source",
+    "integrity",
+    "physicalImage",
+    "coverage",
+    "decoded",
+    "conversionModel",
+    "unknownData",
+    "reconstruction",
+    "diagnostics"
+  ],
+  "properties": {
+    "schema": {
+      "type": "object",
+      "required": [
+        "format",
+        "schemaVersion",
+        "canonicalExtension",
+        "lossless"
+      ],
+      "properties": {
+        "format": { "const": "pkmn-red-master-save" },
+        "schemaVersion": { "const": "0.1.0" },
+        "canonicalExtension": { "const": ".red.json" },
+        "lossless": { "const": true },
+        "stability": { "const": "draft" }
+      }
+    },
+    "integrity": {
+      "type": "object",
+      "required": [
+        "mainChecksum"
+      ],
+      "properties": {
+        "mainChecksum": {
+          "type": "object",
+          "required": [
+            "storedOffset",
+            "coveredRange",
+            "storedValue",
+            "calculatedValue",
+            "valid",
+            "algorithm"
+          ]
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "fileName",
+        "fileSize",
+        "standardSramSize",
+        "trailingByteCount",
+        "hashes"
+      ],
+      "properties": {
+        "fileName": { "type": "string" },
+        "trailingByteCount": { "type": "integer", "minimum": 0 },
+        "hashes": {
+          "type": "object",
+          "required": [
+            "wholeFileSha256",
+            "standardSramSha256",
+            "trailingDataSha256"
+          ],
+          "properties": {
+            "wholeFileSha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "standardSramSha256": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{64}$"
+            },
+            "trailingDataSha256": {
+              "anyOf": [
+                { "type": "string", "pattern": "^[0-9A-F]{64}$" },
+                { "type": "null" }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "physicalImage": {
+      "type": "object",
+      "required": [
+        "encoding",
+        "standardSramHex",
+        "trailingDataHex",
+        "totalLength",
+        "standardSramLength",
+        "trailingLength"
+      ],
+      "properties": {
+        "encoding": { "const": "hex_uppercase_continuous" },
+        "standardSramHex": {
+          "type": "string",
+          "pattern": "^[0-9A-F]+$",
+          "minLength": 65536,
+          "maxLength": 65536
+        },
+        "trailingDataHex": {
+          "type": "string",
+          "pattern": "^[0-9A-F]*$"
+        },
+        "totalLength": { "type": "integer", "minimum": 32768 },
+        "standardSramLength": { "const": 32768 },
+        "trailingLength": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "required": [
+        "summary",
+        "primaryRanges"
+      ],
+      "properties": {
+        "summary": {
+          "type": "object",
+          "required": [
+            "totalStandardSramBytes",
+            "uncoveredBytes",
+            "overlappingPrimaryBytes"
+          ],
+          "properties": {
+            "totalStandardSramBytes": { "const": 32768 },
+            "uncoveredBytes": { "const": 0 },
+            "overlappingPrimaryBytes": { "const": 0 }
+          }
+        },
+        "primaryRanges": { "type": "array" }
+      }
+    },
+    "decoded": {
+      "type": "object",
+      "required": [
+        "trainer",
+        "rival",
+        "options",
+        "playtime",
+        "moneyAndCoins",
+        "badges",
+        "location",
+        "runtimeState",
+        "pokedex",
+        "inventory",
+        "party",
+        "pcStorage",
+        "currentBoxCache",
+        "daycare",
+        "hallOfFame",
+        "events",
+        "trainerBattles",
+        "staticBattles",
+        "storyProgress",
+        "scripts",
+        "missableObjects",
+        "hiddenItems",
+        "hiddenCoins",
+        "visitedTowns",
+        "worldState",
+        "checksums",
+        "semanticConsistency"
+      ],
+      "properties": {
+        "party": {
+          "type": "object",
+          "required": [
+            "count",
+            "pokemon"
+          ],
+          "properties": {
+            "count": { "type": "integer", "minimum": 0, "maximum": 6 },
+            "pokemon": { "type": "array" }
+          }
+        },
+        "pcStorage": {
+          "type": "object",
+          "required": [
+            "boxes"
+          ],
+          "properties": {
+            "boxes": { "type": "array", "minItems": 12, "maxItems": 12 }
+          }
+        },
+        "currentBoxCache": {
+          "type": "object",
+          "required": [
+            "selectedBoxNumber",
+            "synchronizationStatus",
+            "cache"
+          ]
+        },
+        "semanticConsistency": {
+          "type": "object",
+          "required": [
+            "semanticValidationBlocksRawReconstruction"
+          ],
+          "properties": {
+            "semanticValidationBlocksRawReconstruction": { "const": false }
+          }
+        }
+      }
+    },
+    "conversionModel": {
+      "type": "object",
+      "required": [
+        "modelVersion",
+        "purpose",
+        "pipeline",
+        "authority",
+        "identity",
+        "trainer",
+        "playtime",
+        "currency",
+        "badges",
+        "pokedex",
+        "party",
+        "storage",
+        "daycare",
+        "inventory",
+        "storyProgress",
+        "staticEncounters",
+        "hallOfFame",
+        "locationPolicy",
+        "conversionPolicies",
+        "classificationTable",
+        "warnings",
+        "provenance"
+      ],
+      "properties": {
+        "modelVersion": { "const": "0.1.0-draft" },
+        "purpose": { "const": "layout_independent_red_to_firered_source_model" },
+        "pipeline": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "red_json" },
+            { "const": "shared_conversion_model" },
+            { "const": "fred_json" },
+            { "const": "firered_save_writer" }
+          ]
+        },
+        "authority": {
+          "type": "object",
+          "required": [
+            "archival",
+            "semantic",
+            "reconstruction"
+          ]
+        },
+        "conversionPolicies": { "type": "object" },
+        "classificationTable": {
+          "type": "object",
+          "required": [
+            "directTransfer",
+            "semanticTranslation",
+            "redOnlyPreservation",
+            "unsupportedOrPolicyRequired"
+          ]
+        },
+        "warnings": { "type": "array" },
+        "provenance": { "type": "array" }
+      }
+    },
+    "unknownData": { "type": "object" },
+    "reconstruction": {
+      "type": "object",
+      "required": [
+        "policy",
+        "semanticFieldsAreInformational",
+        "noEditRoundTripRequired"
+      ],
+      "properties": {
+        "policy": { "const": "use-physical-image-for-no-edit-reconstruction" },
+        "semanticFieldsAreInformational": { "const": true },
+        "noEditRoundTripRequired": { "const": true }
+      }
+    },
+    "diagnostics": { "type": "object" }
+  }
+}
