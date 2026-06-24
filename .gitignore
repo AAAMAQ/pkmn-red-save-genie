@@ -29,7 +29,11 @@ build/
 
 # Local research/archive folders (not production source)
 IMPORTANT PDF and other files IGNORE/
+personal resources/
 tmp/
+
+# Unpublished research/publication drafts (add deliberately after review)
+docs/publication/
 
 # Generated exports (runtime output)
 PokemonBoxes.json

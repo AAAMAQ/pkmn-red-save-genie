@@ -4,9 +4,43 @@ This file records meaningful project commits and the engineering decisions behin
 
 Note: a commit cannot contain its own final hash without an amend or follow-up commit. When an entry is created in the same commit it describes, the exact hash is reported in the completion message and is visible through `git log`.
 
+## 2026-06-24 — Keep unpublished research artifacts private
+
+Commit hash: pending commit.
+
+Title: Ignore unpublished research and publication drafts
+
+Systems affected:
+
+- Git ignore policy for unpublished manuscripts and private research material.
+
+Files affected:
+
+- `.gitignore`
+- `docs/PROJECT_GIT_LOG.md`
+
+Test results:
+
+- `git check-ignore` verified the private publication and research directories.
+- `git diff --check` passed.
+
+Important decisions:
+
+- `docs/publication/` remains local and untracked until its manuscripts are reviewed and intentionally published.
+- `personal resources/` remains local and untracked because it contains private saves, references, generated outputs, and working notes.
+- Publication files will be added later through an explicit reviewed commit rather than entering Git accidentally.
+
+Known limitations:
+
+- Ignored files are not backed up or distributed by Git.
+
+Summary:
+
+This repository-policy commit keeps unpublished research and personal reference material out of the public project while preserving the files locally for later verification and publication.
+
 ## 2026-06-22 — Prepare project for public research release
 
-Commit hash: pending review and commit.
+Commit hash: `b0728e5`
 
 Title: Prepare project for public research release
 
