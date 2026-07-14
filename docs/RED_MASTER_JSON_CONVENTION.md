@@ -100,8 +100,8 @@ The current draft emits these decoded sections when `includeDecodedSummary` is e
 - `pokedex`: owned/seen totals, owned/seen lists, and one entry for each National Dex species.
 - `inventory`: bag and PC item storage with item names, IDs, quantities, slots, and offsets.
 - `party`: party count and detailed Pokémon records.
-- `pcStorage`: all twelve permanent PC boxes with detailed Pokémon records.
-- `currentBoxCache`: selected box byte, cache/permanent comparison, synchronization status, and cache contents without exposing internal box `-1` as a public box number.
+- `pcStorage`: all twelve permanent PC boxes with complete `0x21`-byte boxed-Pokemon fields, including stored current HP, level, status, types, and catch rate.
+- `currentBoxCache`: selected box byte, selected number, high-bit box-history state, cache/permanent comparison, and the independent Bank 1 current working-box contents without exposing internal box `-1` as a public box number.
 - `daycare`: daycare occupancy and Pokémon data when present.
 - `hallOfFame`: Hall of Fame entries and Pokémon records.
 - `events`: named event flags with categories, descriptions, persistence class, and source metadata.
@@ -117,6 +117,25 @@ The current draft emits these decoded sections when `includeDecodedSummary` is e
 - `checksums`: decoded checksum validity values.
 
 The decoded hierarchy is a normalized superset of the legacy exports, not an embedded copy of those files.
+
+## Lossless Text Values
+
+Display text is convenient for users but is not always a one-to-one representation of Generation I bytes. Name objects therefore include a `losslessValue` where relevant:
+
+- `<DOT>` preserves byte `0xF2` while displaying `.`;
+- `<PERIOD>` preserves byte `0xE8` while also displaying `.`;
+- named tokens preserve supported special glyphs;
+- `<0xHH>` preserves an otherwise unknown byte explicitly.
+
+Semantic generators should prefer `losslessValue` and must not replace a valid source byte with a fallback question mark or space.
+
+## Current Working Box
+
+The Bank 1 current box is an operational working copy, not merely a derived preview. It may legitimately differ from the selected permanent box until the game commits it during a box change. `selectedBoxNumber`, `rawSelectedBoxValue`, `hasChangedBoxesBefore`, the permanent selected box, and `cache` are separate decoded facts. Consumers must not silently replace a non-empty working box with an empty permanent selected box.
+
+## Hall Of Fame Slots
+
+Each active Hall of Fame record occupies `0x60` bytes and contains six fixed `0x10`-byte slots. `partyOrder` preserves the physical slot. Species values are validated as internal Generation I species IDs and then mapped to National Dex identities; values greater than 151 are not automatically invalid because internal IDs and National Dex numbers are different domains.
 
 ## Metadata, Confidence, And Persistence
 

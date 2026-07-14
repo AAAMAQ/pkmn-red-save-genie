@@ -2,7 +2,7 @@
 
 Project: `pkmn-red-save-genie`
 
-Creator: MAQ, Big MAQ Studio
+Creator: MAQ / BiG MAQ Studios
 
 Last updated: 2026-06-20
 
@@ -150,7 +150,7 @@ Remaining questions: Which emulators append which metadata and should it ever be
 
 Date: 2026-06-19
 
-Status: Open validation finding
+Status: Resolved on 2026-07-14; superseded by Finding R-020
 
 Source: `PokemonBoxes.json`; `ReadOnlyData.cpp`
 
@@ -158,13 +158,13 @@ Evidence: Generated `PokemonBoxes.json` includes some boxed Pokemon levels above
 
 Previous assumption: PC box decode was fully plausible based on successful export generation.
 
-Finding: PC box export exists, but boxed level offset plausibility needs immediate verification.
+Finding: The concern was valid. The old decoder read one byte past the `0x21`-byte record. Correct decoding reads stored level at `+0x03` and stored current HP at `+0x01..+0x02`.
 
-Implementation impact: Do not edit parser during documentation. Recommended next technical task should verify PC box level/EXP/move/DV output with save data and references.
+Implementation impact: The parser and semantic export were corrected, with boundary and post-withdrawal regression tests.
 
-Validation: Not yet resolved.
+Validation: Source bytes and equivalent emulator withdrawals confirmed `201/201` for the Box 1 Dugtrio; generated zero HP was traced to the old parser output.
 
-Remaining questions: Is the generated artifact from an older build, corrupted data, or a current boxed-mon offset issue?
+Remaining questions: Broader corpus validation remains useful, but the offset question is resolved.
 
 ## Finding R-009 - Text Exports Are Debug/Audit Artifacts, Not Conversion Source of Truth
 
@@ -365,3 +365,63 @@ Implementation impact: Red Save Genie documentation now marks `.red.json` stable
 Validation: Repository tests verify Red round-trip behavior. Human-reported playtesting/emulator/bug-testing results are accepted for the documentation release pass unless contradicted by repository evidence.
 
 Remaining questions: FireRed section handling, Pokémon encryption, target mappings, and converted-save validation remain open.
+
+## Finding R-019 - Display Text Alone Is Not A Lossless Semantic Value
+
+Date: 2026-07-14
+
+Status: Confirmed by source bytes, emulator display, and corrective round-trip tests
+
+Evidence: An OT name contained byte `0xF2`, rendered by the game as `.`, but the former partial codec decoded it through the unknown fallback as `?`. Re-encoding changed it to a different byte.
+
+Finding: Visually equivalent Unicode text can hide distinct Gen I bytes, while an unknown fallback can destroy a valid glyph. Save Genie must expose both display text and a lossless token representation.
+
+Implementation impact: `DecodeNameLossless()` emits `<DOT>`, `<PERIOD>`, named glyph tokens, and `<0xHH>` escapes. Corrective tests prove byte-aware round trips.
+
+## Finding R-020 - Boxed Records Store HP And Level Inside The 0x21-Byte Record
+
+Date: 2026-07-14
+
+Status: Confirmed by binary comparison and post-withdrawal emulator evidence
+
+Evidence: A valid Box 1 Dugtrio record begins with species, HP `0x00C9`, and level `0x64`. The former decoder read level at `+0x21`, one byte beyond the record, and emitted zero HP. The generated Pokemon subsequently withdrew as `0/201`; the source withdrew as `201/201`.
+
+Finding: Current HP is stored at `+0x01..+0x02`, level at `+0x03`, status at `+0x04`, types at `+0x05..+0x06`, and catch rate at `+0x07`.
+
+Implementation impact: Save Genie now exports these fields from their verified offsets. Tests guard the record boundary and withdrawal-relevant values.
+
+## Finding R-021 - The Bank 1 Current Box Can Be Authoritative Player-Visible State
+
+Date: 2026-07-14
+
+Status: Confirmed by source binary and emulator behavior
+
+Evidence: The completed source save has selected byte `0x8B`, empty permanent Box 12, and 20 Pokemon in the Bank 1 current working box. Bill's PC displays those 20 Pokemon.
+
+Finding: Current-box and permanent selected-box divergence is not automatically corruption. Consumers must preserve and compare both structures rather than deriving the working copy unconditionally.
+
+Implementation impact: `.red.json` identifies the selected number, high-bit history state, permanent/cache comparison, and full working-box contents separately.
+
+## Finding R-022 - Hall Of Fame Species Use Internal IDs In Fixed Slots
+
+Date: 2026-07-14
+
+Status: Confirmed by raw records and emulator-visible failure
+
+Evidence: Charizard is stored as internal species ID `0xB4`. Filtering IDs numerically above 151 removed Charizard from each semantic team, compressed following slots, and produced missing members or `?? BIRD` in a generated save.
+
+Finding: Each Hall of Fame team is six fixed `0x10`-byte slots within a `0x60`-byte record. Internal species validity must use the Gen I mapping table, not a National Dex numeric range.
+
+Implementation impact: Save Genie preserves `partyOrder`, validates internal IDs, and exports all populated slots without vector compression.
+
+## Finding R-023 - Project Licensing Uses Standard MIT Terms
+
+Date: 2026-07-14
+
+Status: Owner-approved and documented
+
+Evidence: Repository-root `LICENSE`; generator repository `LICENSE`; public README license sections
+
+Finding: Save Genie and Save Generator use the standard MIT License under the project identity `MAQ / BiG MAQ Studios`. A shared stewardship note asks users to favor education, research, archival preservation, and retro-development rather than merely repackaging the work for sale.
+
+Implementation impact: The stewardship wording is explicitly non-binding and does not alter any MIT permission. Third-party materials retain their own licenses and attribution requirements.

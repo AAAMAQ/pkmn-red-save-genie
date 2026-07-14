@@ -40,6 +40,8 @@ Complete Red-side milestones:
 - Full `0x0000-0x7FFF` byte preservation and coverage classification.
 - Conversion-ready Red semantic model for the future Red-to-FireRed pipeline.
 
+Corrective validation in July 2026 found and fixed four semantic-decoder defects exposed by emulator testing of an independently generated save: a valid dot glyph was decoded lossily, boxed HP/level fields used incomplete offsets, dirty current-box state was described too weakly, and Hall of Fame internal species IDs were filtered as if they were National Dex numbers. Save Genie now emits lossless text tokens, complete boxed-record fields, explicit current/permanent box state, and fixed-slot Hall of Fame records. Parser acceptance remains evidence, not a substitute for emulator validation.
+
 Authoritative public docs:
 
 - `docs/release/GEN1_SAVE_COVERAGE.md`
@@ -278,6 +280,20 @@ This project:
 It is an independent reverse-engineering and file format research project.
 
 Users must supply their own legally obtained save files.
+
+---
+
+## License
+
+Original project code and project-authored documentation are available under
+the MIT License. Copyright (c) 2026 MAQ / BiG MAQ Studios. See `LICENSE`.
+
+The license includes a non-binding stewardship note asking users to keep this
+work oriented toward education, research, archival preservation, and
+retro-development, and not merely repackage it as software for sale. This is a
+personal request, not an additional restriction on the MIT permissions.
+
+Third-party references and materials retain their own licenses and attribution.
 
 ---
 

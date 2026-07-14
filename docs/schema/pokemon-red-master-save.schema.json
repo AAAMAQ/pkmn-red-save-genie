@@ -196,9 +196,21 @@
           "type": "object",
           "required": [
             "selectedBoxNumber",
+            "hasChangedBoxesBefore",
             "synchronizationStatus",
             "cache"
-          ]
+          ],
+          "properties": {
+            "selectedBoxNumber": { "type": "integer", "minimum": 1, "maximum": 12 },
+            "rawSelectedBoxValue": { "type": "integer", "minimum": 0, "maximum": 255 },
+            "hasChangedBoxesBefore": { "type": "boolean" },
+            "boxChangedFlag": {
+              "type": "boolean",
+              "description": "Backward-compatible alias for hasChangedBoxesBefore."
+            },
+            "synchronizationStatus": { "type": "string" },
+            "cache": { "type": "object" }
+          }
         },
         "semanticConsistency": {
           "type": "object",

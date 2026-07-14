@@ -36,7 +36,7 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       launchStyle = "0"
       useCustomWorkingDirectory = "YES"
-      customWorkingDirectory = "/Users/abdulqadir/Documents/Pkmn Red Save Genie/Pkmn Red Save Genie"
+      customWorkingDirectory = "$(PROJECT_DIR)/Pkmn Red Save Genie"
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"

@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <iostream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "../Pkmn Red Save Genie/HPP Files/ReadOnlyData.hpp"
@@ -44,6 +45,119 @@ static void TestTextCodec() {
     bytes[Gen1Layout::RivalNameOff + 4] = 0xE3; // -
     bytes[Gen1Layout::RivalNameOff + 5] = 0x50;
     assert(Gen1TextCodec::DecodeName(save, Gen1Layout::RivalNameOff, Gen1Layout::RivalNameLen) == "az09-");
+
+    bytes[Gen1Layout::RivalNameOff] = 0x8B;     // L
+    bytes[Gen1Layout::RivalNameOff + 1] = 0xB3; // t
+    bytes[Gen1Layout::RivalNameOff + 2] = 0xF2; // decimal-point glyph
+    bytes[Gen1Layout::RivalNameOff + 3] = 0x80; // A
+    bytes[Gen1Layout::RivalNameOff + 4] = 0xB2; // s
+    bytes[Gen1Layout::RivalNameOff + 5] = 0xA7; // h
+    bytes[Gen1Layout::RivalNameOff + 6] = 0x50;
+    assert(Gen1TextCodec::DecodeName(save, Gen1Layout::RivalNameOff, Gen1Layout::RivalNameLen) == "Lt.Ash");
+    assert(Gen1TextCodec::DecodeNameLossless(
+               save, Gen1Layout::RivalNameOff, Gen1Layout::RivalNameLen) == "Lt<DOT>Ash");
+    const std::vector<u8> lossless =
+        Gen1TextCodec::EncodeNameBytes("Lt<DOT>Ash", Gen1Layout::RivalNameLen);
+    assert(lossless[2] == 0xF2);
+
+    Gen1TextCodec::EncodeName(
+        save, Gen1Layout::RivalNameOff, Gen1Layout::RivalNameLen, "NIDORAN♀");
+    assert(save.ReadU8(Gen1Layout::RivalNameOff + 7) == 0xF5);
+    assert(Gen1TextCodec::DecodeName(
+               save, Gen1Layout::RivalNameOff, Gen1Layout::RivalNameLen) == "NIDORAN♀");
+
+    bool rejected = false;
+    try {
+        static_cast<void>(Gen1TextCodec::EncodeNameBytes("BAD🙂", Gen1Layout::RivalNameLen));
+    } catch (const std::invalid_argument&) {
+        rejected = true;
+    }
+    assert(rejected);
+
+    const std::vector<std::pair<std::string, u8> > tokens = {
+        {"<PC>", 0x5B}, {"<TM>", 0x5C}, {"<TRAINER>", 0x5D},
+        {"<ROCKET>", 0x5E}, {" ", 0x7F}, {"(", 0x9A}, {")", 0x9B},
+        {":", 0x9C}, {";", 0x9D}, {"[", 0x9E}, {"]", 0x9F}, {"é", 0xBA},
+        {"<APOS_D>", 0xBB}, {"<APOS_L>", 0xBC}, {"<APOS_S>", 0xBD},
+        {"<APOS_T>", 0xBE}, {"<APOS_V>", 0xBF}, {"'", 0xE0},
+        {"<PK>", 0xE1}, {"<MN>", 0xE2}, {"-", 0xE3},
+        {"<APOS_R>", 0xE4}, {"<APOS_M>", 0xE5}, {"?", 0xE6},
+        {"!", 0xE7}, {"<PERIOD>", 0xE8}, {"♂", 0xEF}, {"¥", 0xF0},
+        {"×", 0xF1}, {"<DOT>", 0xF2}, {"/", 0xF3}, {",", 0xF4},
+        {"♀", 0xF5}, {"<0xC0>", 0xC0}
+    };
+    for (const auto& item : tokens) {
+        const std::vector<u8> encoded = Gen1TextCodec::EncodeNameBytes(item.first, 2);
+        assert(encoded[0] == item.second);
+        bytes[Gen1Layout::RivalNameOff] = encoded[0];
+        bytes[Gen1Layout::RivalNameOff + 1] = 0x50;
+        assert(Gen1TextCodec::DecodeNameLossless(
+                   save, Gen1Layout::RivalNameOff, 2) == item.first);
+    }
+
+    rejected = false;
+    try {
+        static_cast<void>(Gen1TextCodec::EncodeNameBytes("<0x50>", 2));
+    } catch (const std::invalid_argument&) {
+        rejected = true;
+    }
+    assert(rejected);
+}
+
+static void TestBoxStoredFieldsAndHallOfFameInternalSpecies() {
+    SaveBuffer save = MakeBlankSave();
+    auto& bytes = save.BytesMutable();
+
+    const std::size_t box = Gen1Layout::Box1Off;
+    bytes[box + Gen1Layout::BoxCountRel] = 1;
+    bytes[box + Gen1Layout::BoxSpeciesRel] = 0x08; // SLOWBRO
+    bytes[box + Gen1Layout::BoxSpeciesRel + 1] = 0xFF;
+    const std::size_t mon = box + Gen1Layout::BoxStructsRel;
+    bytes[mon + 0x00] = 0x08;
+    bytes[mon + 0x01] = 0x01;
+    bytes[mon + 0x02] = 0x42; // 322 HP
+    bytes[mon + 0x03] = 100;
+    bytes[mon + 0x04] = 0x40;
+    bytes[mon + 0x05] = 0x15;
+    bytes[mon + 0x06] = 0x18;
+    bytes[mon + 0x07] = 0x00;
+    bytes[mon + 0x0E] = 0x0F;
+    bytes[mon + 0x0F] = 0x42;
+    bytes[mon + 0x10] = 0x40;
+    bytes[mon + 0x1B] = 0xDC;
+    bytes[mon + 0x1C] = 0xBC;
+    Gen1TextCodec::EncodeName(
+        save, box + Gen1Layout::BoxOTNamesRel, Gen1Layout::Gen1NameLen, "ASH");
+    Gen1TextCodec::EncodeName(
+        save, box + Gen1Layout::BoxNicknamesRel, Gen1Layout::Gen1NameLen, "SLOWBRO");
+
+    ReadOnlyData reader(save);
+    const PokemonBox decoded = reader.GetPCBox(1);
+    assert(decoded.pokemon.size() == 1);
+    assert(decoded.pokemon[0].stats.hpCurrent == 322);
+    assert(decoded.pokemon[0].level == 100);
+    assert(decoded.pokemon[0].stats.status == 0x40);
+    assert(decoded.pokemon[0].type1 == 0x15);
+    assert(decoded.pokemon[0].type2 == 0x18);
+    assert(decoded.pokemon[0].catchRate == 0x00);
+
+    bytes[Gen1Layout::HallOfFameRecordCountOff] = 1;
+    for (int slot = 0; slot < 6; ++slot) {
+        const std::size_t hofMon = Gen1Layout::HallOfFameOff
+            + static_cast<std::size_t>(slot) * Gen1Layout::HallOfFameMonEntrySize;
+        bytes[hofMon] = slot == 5 ? 0xB4 : 0x24; // slot 6 is CHARIZARD
+        bytes[hofMon + 1] = static_cast<u8>(50 + slot);
+        Gen1TextCodec::EncodeName(save, hofMon + 2, Gen1Layout::Gen1NameLen,
+                                  slot == 5 ? "CHARIZARD" : "PIDGEY");
+    }
+    const std::vector<HallOfFameEntry> hall = reader.GetHallOfFame();
+    assert(hall.size() == 1);
+    assert(hall[0].team.size() == 6);
+    assert(hall[0].team[5].partyOrder == 6);
+    assert(hall[0].team[5].speciesId == 0xB4);
+    assert(hall[0].team[5].speciesName == "CHARIZARD");
+    assert(Gen1SpeciesLookup::IsValidSpeciesId(0xB4));
+    assert(!Gen1SpeciesLookup::IsValidSpeciesId(0x1F));
 }
 
 static void TestPartyDecodeDvsAndPpMasking() {
@@ -186,7 +300,7 @@ static void TestWorldPlayerEventAndDaycareSummaries() {
     bytes[Gen1Layout::DaycareBoxMonOff + 0x00] = 36; // PIDGEY
     bytes[Gen1Layout::DaycareBoxMonOff + 0x0C] = 0x10;
     bytes[Gen1Layout::DaycareBoxMonOff + 0x0D] = 0x01;
-    bytes[Gen1Layout::DaycareBoxMonOff + 0x21] = 5;
+    bytes[Gen1Layout::DaycareBoxMonOff + 0x03] = 5;
     Gen1TextCodec::EncodeName(save, Gen1Layout::DaycareNicknameOff, Gen1Layout::Gen1NameLen, "BIRD");
     Gen1TextCodec::EncodeName(save, Gen1Layout::DaycareOTNameOff, Gen1Layout::Gen1NameLen, "MAQ");
 
@@ -280,6 +394,7 @@ static void TestWorldPlayerEventAndDaycareSummaries() {
 int main() {
     TestBcdAndChecksum();
     TestTextCodec();
+    TestBoxStoredFieldsAndHallOfFameInternalSpecies();
     TestPartyDecodeDvsAndPpMasking();
     TestSafeEditorSetters();
     TestWorldPlayerEventAndDaycareSummaries();

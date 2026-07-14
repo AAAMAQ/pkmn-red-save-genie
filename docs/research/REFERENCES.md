@@ -2,7 +2,7 @@
 
 Project: `pkmn-red-save-genie`
 
-Creator: MAQ, Big MAQ Studio
+Creator: MAQ / BiG MAQ Studios
 
 Last updated: 2026-06-22
 
@@ -39,7 +39,7 @@ Last updated: 2026-06-22
 | `docs/external_projects_deep_analysis.md` | Detailed analysis of external projects and references. |
 | `docs/PROJECT_GIT_LOG.md` | Public milestone and commit decision log. |
 | `docs/PROJECT_PUBLIC_RESEARCH_RELEASE.md` | Final public research-release conclusion and authoritative documentation map. |
-| Current user documentation prompt, 2026-06-19 | Project-origin section: MAQ, Big MAQ Studio, uncle's Pokemon Red cartridge, battery repair, personal preservation motivation. |
+| Current user documentation prompt, 2026-06-19 | Project-origin section: MAQ / BiG MAQ Studios, uncle's Pokemon Red cartridge, battery repair, personal preservation motivation. |
 
 ## Supplied PDF Text Extracts
 

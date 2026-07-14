@@ -2,7 +2,7 @@
 
 Project: `pkmn-red-save-genie`
 
-Creator: MAQ, Big MAQ Studio
+Creator: MAQ / BiG MAQ Studios
 
 Last updated: 2026-06-19
 
@@ -212,7 +212,7 @@ Milestone:
 
 Technical significance: This is the latest major repository checkpoint and current completed milestone.
 
-Validation note: Party values are strong regression anchors. PC box details still need deeper plausibility verification because the generated artifact shows some implausible boxed levels.
+Validation note: This checkpoint originally flagged implausible boxed levels. The question was resolved on 2026-07-14: level is stored at `+0x03`, and the former `+0x21` read was one byte beyond the boxed record.
 
 ## April 19, 2026 - Next Research Direction: FireRed Symbols
 

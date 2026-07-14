@@ -18,6 +18,11 @@ static FileManipulation::Bytes MakeSyntheticSave(std::size_t size) {
     for (std::size_t i = 0; i < bytes.size(); ++i) {
         bytes[i] = static_cast<u8>((i * 37 + 0x4D) & 0xFF);
     }
+    // The archival round-trip fixture may contain arbitrary bytes, but its
+    // decoded semantic sections must still satisfy active-record invariants.
+    if (size > Gen1Layout::HallOfFameRecordCountOff) {
+        bytes[Gen1Layout::HallOfFameRecordCountOff] = 0;
+    }
     return bytes;
 }
 
@@ -254,6 +259,10 @@ static void TestExpandedDecodedHierarchy(const std::filesystem::path& dir) {
     assert(Contains(json, "\"checksums\""));
     assert(Contains(json, "\"name\": \"PIDGEY\""));
     assert(Contains(json, "\"nickname\": { \"value\": \"PEGGY\""));
+    assert(Contains(json, "\"losslessValue\": \"PEGGY\""));
+    assert(Contains(json, "\"nameLossless\": \"MARIO\""));
+    assert(Contains(json, "\"verified_stored_fields\""));
+    assert(Contains(json, "\"catchRate\""));
     assert(Contains(json, "\"move\": { \"name\": \"GUST\""));
     assert(Contains(json, "\"dvToIvPolicy\""));
     assert(Contains(json, "\"draft_dv_times_2_plus_1\""));

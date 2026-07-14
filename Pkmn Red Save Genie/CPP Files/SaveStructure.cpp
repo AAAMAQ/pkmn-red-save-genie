@@ -11,7 +11,10 @@
 #include "SaveStructure.hpp"
 
 #include <algorithm>
+#include <array>
+#include <iomanip>
 #include <sstream>
+#include <stdexcept>
 
 namespace savegenie {
 
@@ -719,11 +722,15 @@ std::string Gen1SpeciesLookup::DexfromId(u8 speciesId){
     const std::size_t idx = static_cast<std::size_t>(speciesId);
     if (idx >= 256) return "INVALID";
     for(int i = 0; i <256 ; i++){
-       if( Gen1SpeciesLookup::PokeDex[i]==idx)
+       if(Gen1SpeciesLookup::PokeDex[i] == static_cast<int>(idx))
            return std::to_string(i);
     }
 
     return "INVALID";
+}
+
+bool Gen1SpeciesLookup::IsValidSpeciesId(u8 speciesId) {
+    return DexfromId(speciesId) != "INVALID" && NameFromId(speciesId) != "INVALID";
 }
 
 
@@ -1295,6 +1302,127 @@ std::string Gen1MoveLookup::MoveFromId(u8 moveId) {
 // Gen1TextCodec
 // =========================================================
 
+namespace {
+
+struct Gen1TextToken {
+    u8 byte;
+    const char* display;
+    const char* lossless;
+};
+
+constexpr std::array<Gen1TextToken, 33> kGen1TextTokens = {{
+    {0x5B, "PC", "<PC>"},
+    {0x5C, "TM", "<TM>"},
+    {0x5D, "TRAINER", "<TRAINER>"},
+    {0x5E, "ROCKET", "<ROCKET>"},
+    {0x7F, " ", " "},
+    {0x9A, "(", "("},
+    {0x9B, ")", ")"},
+    {0x9C, ":", ":"},
+    {0x9D, ";", ";"},
+    {0x9E, "[", "["},
+    {0x9F, "]", "]"},
+    {0xBA, "é", "é"},
+    {0xBB, "'d", "<APOS_D>"},
+    {0xBC, "'l", "<APOS_L>"},
+    {0xBD, "'s", "<APOS_S>"},
+    {0xBE, "'t", "<APOS_T>"},
+    {0xBF, "'v", "<APOS_V>"},
+    {0xE0, "'", "'"},
+    {0xE1, "PK", "<PK>"},
+    {0xE2, "MN", "<MN>"},
+    {0xE3, "-", "-"},
+    {0xE4, "'r", "<APOS_R>"},
+    {0xE5, "'m", "<APOS_M>"},
+    {0xE6, "?", "?"},
+    {0xE7, "!", "!"},
+    {0xE8, ".", "<PERIOD>"},
+    {0xEF, "♂", "♂"},
+    {0xF0, "¥", "¥"},
+    {0xF1, "×", "×"},
+    {0xF2, ".", "<DOT>"},
+    {0xF3, "/", "/"},
+    {0xF4, ",", ","},
+    {0xF5, "♀", "♀"},
+}};
+
+std::string UnknownTextToken(u8 byte) {
+    std::ostringstream oss;
+    oss << "<0x" << std::uppercase << std::hex << std::setw(2)
+        << std::setfill('0') << static_cast<int>(byte) << ">";
+    return oss.str();
+}
+
+std::string TokenForByte(u8 byte, bool lossless) {
+    if (byte >= 0x80 && byte <= 0x99) {
+        return std::string(1, static_cast<char>('A' + (byte - 0x80)));
+    }
+    if (byte >= 0xA0 && byte <= 0xB9) {
+        return std::string(1, static_cast<char>('a' + (byte - 0xA0)));
+    }
+    if (byte >= 0xF6 && byte <= 0xFF) {
+        return std::string(1, static_cast<char>('0' + (byte - 0xF6)));
+    }
+    for (const auto& token : kGen1TextTokens) {
+        if (token.byte == byte) {
+            return lossless ? token.lossless : token.display;
+        }
+    }
+    return UnknownTextToken(byte);
+}
+
+std::string DecodeNameImpl(const SaveBuffer& sb,
+                           std::size_t off,
+                           std::size_t len,
+                           bool lossless) {
+    const auto bytes = sb.Slice(off, len);
+    std::string out;
+    for (u8 byte : bytes) {
+        if (byte == 0x50) {
+            break;
+        }
+        out += TokenForByte(byte, lossless);
+    }
+    return out;
+}
+
+bool Consume(std::string_view input, std::size_t pos, std::string_view token) {
+    return pos + token.size() <= input.size() && input.substr(pos, token.size()) == token;
+}
+
+int HexNibble(char c) {
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'A' && c <= 'F') return 10 + c - 'A';
+    if (c >= 'a' && c <= 'f') return 10 + c - 'a';
+    return -1;
+}
+
+bool ConsumeRawByteToken(std::string_view input, std::size_t pos, u8* byte) {
+    if (pos + 6 > input.size() || input.substr(pos, 3) != "<0x" ||
+        input[pos + 5] != '>') {
+        return false;
+    }
+    const int high = HexNibble(input[pos + 3]);
+    const int low = HexNibble(input[pos + 4]);
+    if (high < 0 || low < 0) return false;
+    *byte = static_cast<u8>((high << 4) | low);
+    return true;
+}
+
+u8 EncodeSingleAscii(char c) {
+    if (c >= 'A' && c <= 'Z') return static_cast<u8>(0x80 + (c - 'A'));
+    if (c >= 'a' && c <= 'z') return static_cast<u8>(0xA0 + (c - 'a'));
+    if (c >= '0' && c <= '9') return static_cast<u8>(0xF6 + (c - '0'));
+    for (const auto& token : kGen1TextTokens) {
+        if (std::string_view(token.display).size() == 1 && token.display[0] == c) {
+            return token.byte;
+        }
+    }
+    throw std::invalid_argument(std::string("unsupported Gen I text character: ") + c);
+}
+
+}  // namespace
+
 char Gen1TextCodec::ByteToAscii(u8 byte) {
     // Common Gen I font bytes used by names and save text.
     // Reference cross-check: junebug12851/pokered-save-editor text.json.
@@ -1307,6 +1435,7 @@ char Gen1TextCodec::ByteToAscii(u8 byte) {
     if (byte == 0xE6) return '?';
     if (byte == 0xE7) return '!';
     if (byte == 0xE8) return '.';
+    if (byte == 0xF2) return '.';
     if (byte == 0xF0) return '$';
     if (byte == 0xF3) return '/';
     if (byte == 0xF4) return ',';
@@ -1328,37 +1457,80 @@ u8 Gen1TextCodec::AsciiToByte(char c) {
     if (c == '/') return 0xF3;
     if (c == ',') return 0xF4;
 
-    // Fallback to space for unsupported direct writes; editor UI rejects first.
-    return 0x7F;
+    throw std::invalid_argument(std::string("unsupported Gen I text character: ") + c);
 }
 
 std::string Gen1TextCodec::DecodeName(const SaveBuffer& sb, std::size_t off, std::size_t len) {
-    const auto bytes = sb.Slice(off, len);
+    return DecodeNameImpl(sb, off, len, false);
+}
 
-    std::string out;
-    out.reserve(len);
+std::string Gen1TextCodec::DecodeNameLossless(const SaveBuffer& sb,
+                                              std::size_t off,
+                                              std::size_t len) {
+    return DecodeNameImpl(sb, off, len, true);
+}
 
-    for (u8 b : bytes) {
-        const char c = ByteToAscii(b);
-        if (c == '\0') break;
-        out.push_back(c);
+std::vector<u8> Gen1TextCodec::EncodeNameBytes(std::string_view name, std::size_t len) {
+    if (len == 0) {
+        throw std::invalid_argument("Gen I text field length must be non-zero");
+    }
+    std::vector<u8> out(len, 0x50);
+
+    std::vector<u8> encoded;
+    for (std::size_t pos = 0; pos < name.size();) {
+        bool matched = false;
+        for (const auto& token : kGen1TextTokens) {
+            const std::string_view lossless(token.lossless);
+            if (lossless.size() > 1 && Consume(name, pos, lossless)) {
+                encoded.push_back(token.byte);
+                pos += lossless.size();
+                matched = true;
+                break;
+            }
+        }
+        if (matched) continue;
+
+        u8 rawByte = 0;
+        if (ConsumeRawByteToken(name, pos, &rawByte)) {
+            if (rawByte == 0x50) {
+                throw std::invalid_argument(
+                    "the Gen I terminator byte cannot appear inside a text value");
+            }
+            encoded.push_back(rawByte);
+            pos += 6;
+            continue;
+        }
+
+        const unsigned char c = static_cast<unsigned char>(name[pos]);
+        if (c < 0x80U) {
+            encoded.push_back(EncodeSingleAscii(static_cast<char>(c)));
+            ++pos;
+            continue;
+        }
+
+        for (const auto& token : kGen1TextTokens) {
+            const std::string_view display(token.display);
+            if (Consume(name, pos, display)) {
+                encoded.push_back(token.byte);
+                pos += display.size();
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) {
+            throw std::invalid_argument("unsupported UTF-8 sequence in Gen I text field");
+        }
     }
 
+    if (encoded.size() >= len) {
+        throw std::out_of_range("Gen I text is too long for the target field");
+    }
+    std::copy(encoded.begin(), encoded.end(), out.begin());
     return out;
 }
 
 void Gen1TextCodec::EncodeName(SaveBuffer& sb, std::size_t off, std::size_t len, std::string_view name) {
-    if (len == 0) return;
-
-    // Fill with terminators (0x50).
-    std::vector<u8> out(len, 0x50);
-
-    const std::size_t n = std::min(name.size(), len - 1);
-    for (std::size_t i = 0; i < n; ++i) {
-        out[i] = AsciiToByte(name[i]);
-    }
-
-    out[n] = 0x50;
+    const std::vector<u8> out = EncodeNameBytes(name, len);
 
     // Write into the buffer.
     sb.RequireRange(off, len);

@@ -1,7 +1,7 @@
 # Junebug Save Editors Analysis Findings
 
 Date of analysis: 2026-06-20
-Prepared for: `pkmn-red-save-genie` / Big MAQ Studio
+Prepared for: `pkmn-red-save-genie` by MAQ / BiG MAQ Studios
 Local project status used for comparison: uncommitted Save Genie release-prep branch state after Safe Editor MVP, Current Box Cache, event-label, test, and release-doc work.
 
 ## Executive Summary
@@ -25,7 +25,7 @@ Most important findings:
 
 ## Methodology
 
-I inspected actual source files, not only README files. The repositories were cloned into `/private/tmp` for local inspection.
+I inspected actual source files, not only README files. The repositories were cloned into a temporary local workspace outside this repository for inspection.
 
 Inspected repository commits:
 
@@ -34,43 +34,43 @@ Inspected repository commits:
 | `pokered-save-editor` | `https://github.com/junebug12851/pokered-save-editor` | `b387f34ef20f311d5ef55ba181047357821b56d2` | 2019-03-31 | `Merge branch 'master' of github.com:junebug12851/pokered-save-editor` |
 | `pokered-save-editor-2` | `https://github.com/junebug12851/pokered-save-editor-2` | `8f3aea2269e5067c3dae21ce0490540571467fa7` | 2026-06-17 | `feat(editor): move action groups into the tab header bar` |
 
-Local source paths inspected include:
+Repository-relative source paths inspected include:
 
-- `/private/tmp/junebug-pokered-save-editor/src/app/data/savefile.service.ts`
-- `/private/tmp/junebug-pokered-save-editor/src/app/data/savefile-expanded/SaveFileExpanded.ts`
-- `/private/tmp/junebug-pokered-save-editor/src/app/data/savefile-expanded/sections/Storage.ts`
-- `/private/tmp/junebug-pokered-save-editor/src/app/data/savefile-expanded/fragments/PokemonBox.ts`
-- `/private/tmp/junebug-pokered-save-editor/src/app/data/savefile-expanded/fragments/PokemonParty.ts`
-- `/private/tmp/junebug-pokered-save-editor/src/app/data/savefile-expanded/sections/Player/PlayerBasics.ts`
-- `/private/tmp/junebug-pokered-save-editor/src/app/data/savefile-expanded/sections/Player/PlayerItems.ts`
-- `/private/tmp/junebug-pokered-save-editor/src/app/data/savefile-expanded/sections/Player/PlayerPokedex.ts`
-- `/private/tmp/junebug-pokered-save-editor/src/app/data/savefile-expanded/sections/Rival.ts`
-- `/private/tmp/junebug-pokered-save-editor/src/app/data/savefile-expanded/sections/HoF.ts`
-- `/private/tmp/junebug-pokered-save-editor/src/app/data/savefile-expanded/fragments/HoFRecord.ts`
-- `/private/tmp/junebug-pokered-save-editor/src/app/data/savefile-expanded/fragments/HoFPokemon.ts`
-- `/private/tmp/junebug-pokered-save-editor/src/app/data/savefile-expanded/sections/World/WorldEvents.ts`
-- `/private/tmp/junebug-pokered-save-editor/src/app/data/savefile-expanded/sections/World/WorldScripts.ts`
-- `/private/tmp/junebug-pokered-save-editor/src/app/data/text.service.ts`
-- `/private/tmp/junebug-pokered-save-editor/electron/SaveFile.js`
-- `/private/tmp/junebug-pokered-save-editor-2/assets/saves/structure.md`
-- `/private/tmp/junebug-pokered-save-editor-2/projects/savefile/src/pse-savefile/savefile.h`
-- `/private/tmp/junebug-pokered-save-editor-2/projects/savefile/src/pse-savefile/savefile.cpp`
-- `/private/tmp/junebug-pokered-save-editor-2/projects/savefile/src/pse-savefile/savefiletoolset.cpp`
-- `/private/tmp/junebug-pokered-save-editor-2/projects/savefile/src/pse-savefile/filemanagement.cpp`
-- `/private/tmp/junebug-pokered-save-editor-2/projects/savefile/src/pse-savefile/expanded/storage.cpp`
-- `/private/tmp/junebug-pokered-save-editor-2/projects/savefile/src/pse-savefile/expanded/fragments/pokemonbox.cpp`
-- `/private/tmp/junebug-pokered-save-editor-2/projects/savefile/src/pse-savefile/expanded/fragments/pokemonparty.cpp`
-- `/private/tmp/junebug-pokered-save-editor-2/projects/savefile/src/pse-savefile/expanded/fragments/pokemonstoragebox.cpp`
-- `/private/tmp/junebug-pokered-save-editor-2/projects/savefile/src/pse-savefile/expanded/fragments/itemstoragebox.cpp`
-- `/private/tmp/junebug-pokered-save-editor-2/projects/savefile/src/pse-savefile/expanded/player/playerbasics.cpp`
-- `/private/tmp/junebug-pokered-save-editor-2/projects/savefile/src/pse-savefile/expanded/player/playerpokedex.cpp`
-- `/private/tmp/junebug-pokered-save-editor-2/projects/savefile/src/pse-savefile/expanded/world/worldevents.cpp`
-- `/private/tmp/junebug-pokered-save-editor-2/projects/savefile/src/pse-savefile/expanded/world/worldscripts.cpp`
-- `/private/tmp/junebug-pokered-save-editor-2/projects/tests/savefile/tst_roundtrip.cpp`
-- `/private/tmp/junebug-pokered-save-editor-2/projects/tests/savefile/tst_toolset.cpp`
-- `/private/tmp/junebug-pokered-save-editor-2/projects/tests/savefile/tst_synthetic_fixtures.cpp`
-- `/private/tmp/junebug-pokered-save-editor-2/projects/tests/savefile/tst_errors.cpp`
-- `/private/tmp/junebug-pokered-save-editor-2/projects/tests/savefile/tst_storage.cpp`
+- `pokered-save-editor/src/app/data/savefile.service.ts`
+- `pokered-save-editor/src/app/data/savefile-expanded/SaveFileExpanded.ts`
+- `pokered-save-editor/src/app/data/savefile-expanded/sections/Storage.ts`
+- `pokered-save-editor/src/app/data/savefile-expanded/fragments/PokemonBox.ts`
+- `pokered-save-editor/src/app/data/savefile-expanded/fragments/PokemonParty.ts`
+- `pokered-save-editor/src/app/data/savefile-expanded/sections/Player/PlayerBasics.ts`
+- `pokered-save-editor/src/app/data/savefile-expanded/sections/Player/PlayerItems.ts`
+- `pokered-save-editor/src/app/data/savefile-expanded/sections/Player/PlayerPokedex.ts`
+- `pokered-save-editor/src/app/data/savefile-expanded/sections/Rival.ts`
+- `pokered-save-editor/src/app/data/savefile-expanded/sections/HoF.ts`
+- `pokered-save-editor/src/app/data/savefile-expanded/fragments/HoFRecord.ts`
+- `pokered-save-editor/src/app/data/savefile-expanded/fragments/HoFPokemon.ts`
+- `pokered-save-editor/src/app/data/savefile-expanded/sections/World/WorldEvents.ts`
+- `pokered-save-editor/src/app/data/savefile-expanded/sections/World/WorldScripts.ts`
+- `pokered-save-editor/src/app/data/text.service.ts`
+- `pokered-save-editor/electron/SaveFile.js`
+- `pokered-save-editor-2/assets/saves/structure.md`
+- `pokered-save-editor-2/projects/savefile/src/pse-savefile/savefile.h`
+- `pokered-save-editor-2/projects/savefile/src/pse-savefile/savefile.cpp`
+- `pokered-save-editor-2/projects/savefile/src/pse-savefile/savefiletoolset.cpp`
+- `pokered-save-editor-2/projects/savefile/src/pse-savefile/filemanagement.cpp`
+- `pokered-save-editor-2/projects/savefile/src/pse-savefile/expanded/storage.cpp`
+- `pokered-save-editor-2/projects/savefile/src/pse-savefile/expanded/fragments/pokemonbox.cpp`
+- `pokered-save-editor-2/projects/savefile/src/pse-savefile/expanded/fragments/pokemonparty.cpp`
+- `pokered-save-editor-2/projects/savefile/src/pse-savefile/expanded/fragments/pokemonstoragebox.cpp`
+- `pokered-save-editor-2/projects/savefile/src/pse-savefile/expanded/fragments/itemstoragebox.cpp`
+- `pokered-save-editor-2/projects/savefile/src/pse-savefile/expanded/player/playerbasics.cpp`
+- `pokered-save-editor-2/projects/savefile/src/pse-savefile/expanded/player/playerpokedex.cpp`
+- `pokered-save-editor-2/projects/savefile/src/pse-savefile/expanded/world/worldevents.cpp`
+- `pokered-save-editor-2/projects/savefile/src/pse-savefile/expanded/world/worldscripts.cpp`
+- `pokered-save-editor-2/projects/tests/savefile/tst_roundtrip.cpp`
+- `pokered-save-editor-2/projects/tests/savefile/tst_toolset.cpp`
+- `pokered-save-editor-2/projects/tests/savefile/tst_synthetic_fixtures.cpp`
+- `pokered-save-editor-2/projects/tests/savefile/tst_errors.cpp`
+- `pokered-save-editor-2/projects/tests/savefile/tst_storage.cpp`
 
 ## License and Reuse Status
 

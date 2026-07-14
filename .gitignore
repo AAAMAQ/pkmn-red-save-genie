@@ -3,6 +3,7 @@
 
 # Xcode
 DerivedData/
+.xcode-derived/
 *.xcuserstate
 xcuserdata/
 

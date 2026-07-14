@@ -370,6 +370,9 @@ public:
 
     u8 level = 0;
     u32 expPoints = 0;
+    u8 type1 = 0;
+    u8 type2 = 0;
+    u8 catchRate = 0;
 
     // -----------------------------------------------------
     // Gen I hidden values (not shown on most screens)
@@ -434,6 +437,7 @@ public:
 
 class HallOfFamePokemon {
 public:
+    int partyOrder = 0;
     u8 speciesId = 0;
     u8 level = 0;
     std::string name; // Gen I text decoded Ex: "PIKAPI"

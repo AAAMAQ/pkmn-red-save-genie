@@ -2,7 +2,7 @@
 
 Project: `pkmn-red-save-genie`
 
-Creator: MAQ, Big MAQ Studio
+Creator: MAQ / BiG MAQ Studios
 
 Last updated: 2026-06-22
 
@@ -12,17 +12,17 @@ Status note: questions in this file are retained as research history. Several Ge
 
 Question: How should unsupported Gen I text bytes, lowercase-like glyphs, punctuation, or modded text be represented in exports and future edits?
 
-Why it matters: Current output uses `?` for unknown glyphs. This is safe but lossy.
+Why it matters: A display-only `?` fallback is lossy and can cause a valid source glyph to be regenerated as a different byte.
 
-Current evidence: `Gen1TextCodec` handles A-Z, 0-9, space, and terminator. PEGGY/MARIO decodes correctly. Names like `BRU?O` and `78??` show unsupported bytes.
+Current evidence: Corrective emulator evidence identified source byte `0xF2`, rendered by the game as `.`, which the former partial codec decoded as `?`. The corrected codec exposes display text plus a lossless token form such as `<DOT>`, `<PERIOD>`, and `<0xHH>`.
 
 Likely source: `pret/pokered/constants/charmap.asm`; existing editor text tables; controlled byte fixtures.
 
-Experiment needed: Generate byte fixtures for the full known charmap and verify decode/encode behavior.
+Experiment needed: Continue corpus validation for regional or modded glyphs beyond the supported English table.
 
 Priority: Medium
 
-Status: Mostly answered for current Save Genie support; broader glyph coverage remains optional/future polish.
+Status: Answered for supported English saves. Lossless token round-trip tests now prevent valid bytes from passing through an encoder fallback; broader regional/modded glyph coverage remains future work.
 
 ## Q-GEN1-002 - How should regional save differences be detected?
 
@@ -50,11 +50,11 @@ Current evidence: `Gen1Layout` has current box cache constants. External analysi
 
 Likely source: `pret/pokered` save/change-box routines; save-diff experiments after changing boxes.
 
-Experiment needed: Compare a save before and after depositing/withdrawing Pokemon and switching PC boxes.
+Experiment needed: Continue corpus validation for unusual interrupted-save states.
 
 Priority: Critical
 
-Status: Answered for export architecture: Save Genie exports current box cache separately and records synchronization metadata. Broader real-save edge-case validation remains useful.
+Status: Answered for export architecture and generation handoff. The permanent boxes and Bank 1 working box are separate authorities; the working box is player-visible and may legitimately be newer than the selected permanent copy until a box switch commits it. Save Genie exports both without silently overlaying or discarding either representation.
 
 ## Q-GEN1-004 - Is the boxed Pokemon level offset correct in current code?
 
@@ -70,7 +70,7 @@ Experiment needed: Create a controlled box with known level Pokemon, save, dump 
 
 Priority: Critical
 
-Status: Accepted as verified for the completed Red-side source role based on current implementation and reported human validation. Additional real-save corpus testing remains useful evidence expansion.
+Status: Resolved on 2026-07-14. Stored boxed level is at `+0x03`; `+0x21` is one byte beyond the `0x21`-byte box record. Stored current HP is at `+0x01..+0x02`. Source bytes and emulator withdrawal evidence validate the corrected interpretation.
 
 ## Q-GEN1-005 - Which Gen I save ranges are decoded, known, unused, or unknown?
 

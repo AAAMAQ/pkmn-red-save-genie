@@ -434,26 +434,6 @@ std::string PokedexSummary::ToString() const {
 // HallOfFamePokemon / HallOfFameEntry
 // =========================================================
 
-static bool IsLikelyValidGen1SpeciesId(savegenie::u8 speciesId) {
-    // Strict-ish: real species are 1..151 in Gen I.
-    // We keep this strict to avoid parsing junk as Hall of Fame.
-    return speciesId >= 1 && speciesId <= 151;
-}
-
-static bool NameLooksReasonable(const std::string& s) {
-    // Minimal heuristic: not empty, not mostly '?'
-    if (s.empty()) return false;
-    int q = 0;
-    int nonSpace = 0;
-    for (char c : s) {
-        if (c == '?') q++;
-        if (c != ' ') nonSpace++;
-    }
-    if (nonSpace == 0) return false;
-    // If more than half are '?', it's probably not a real decoded name.
-    return q * 2 < static_cast<int>(s.size());
-}
-
 std::string HallOfFamePokemon::ToString() const {
     std::ostringstream oss;
     oss << "Species ID=" << static_cast<int>(speciesId)
@@ -742,6 +722,9 @@ static void DecodePartyMonStruct(const SaveBuffer& buf, std::size_t monOff, Poke
     out.level = buf.ReadU8(monOff + 0x21);
     
     out.stats.status = buf.ReadU8(monOff + 0x04);
+    out.type1 = buf.ReadU8(monOff + 0x05);
+    out.type2 = buf.ReadU8(monOff + 0x06);
+    out.catchRate = buf.ReadU8(monOff + 0x07);
 
     out.otIdNo = ReadU16BE_At(buf, monOff + 0x0C);
     out.expPoints = ReadU24BE_At(buf, monOff + 0x0E);
@@ -793,15 +776,19 @@ static void DecodePartyMonStruct(const SaveBuffer& buf, std::size_t monOff, Poke
 }
 
 // Decode a Gen I boxed Pokémon struct (size 0x21) into a PokemonMon.
-// This is a truncated form of the party struct and typically does not contain live battle HP/status.
-// We still extract level/exp/moves/PP when available.
+// The box record stores current HP, box level, status, types, and catch rate,
+// but not the calculated party-only maximum HP and battle stats.
 static void DecodeBoxMonStruct(const SaveBuffer& buf, std::size_t monOff, PokemonMon& out) {
     buf.RequireRange(monOff, Gen1Layout::BoxStructSize);
 
     out.speciesId = buf.ReadU8(monOff + 0x00);
 
-    // Many tools treat level at +0x03 for boxed mons.
-    out.level = buf.ReadU8(monOff + 0x21);
+    out.stats.hpCurrent = ReadU16BE_At(buf, monOff + 0x01);
+    out.level = buf.ReadU8(monOff + 0x03);
+    out.stats.status = buf.ReadU8(monOff + 0x04);
+    out.type1 = buf.ReadU8(monOff + 0x05);
+    out.type2 = buf.ReadU8(monOff + 0x06);
+    out.catchRate = buf.ReadU8(monOff + 0x07);
     out.otIdNo = ReadU16BE_At(buf, monOff + 0x0C);
     out.expPoints = ReadU24BE_At(buf, monOff + 0x0E);
 
@@ -842,10 +829,8 @@ static void DecodeBoxMonStruct(const SaveBuffer& buf, std::size_t monOff, Pokemo
         out.moves.push_back(std::move(mv));
     }
 
-    // Box structs do not store maxHP/atk/def/spd/spc in the same way; leave 0 for now.
-    out.stats.hpCurrent = 0;
+    // Box structs do not store maxHP/atk/def/spd/spc; leave those fields 0.
     out.stats.hpMax = 0;
-    out.stats.status = 0;
     out.stats.attack = 0;
     out.stats.defense = 0;
     out.stats.speed = 0;
@@ -2881,11 +2866,17 @@ std::vector<HallOfFameEntry> ReadOnlyData::GetHallOfFame() const {
     // Ensure the HoF block exists.
     buffer_.RequireRange(Gen1Layout::HallOfFameOff, Gen1Layout::HallOfFameLen);
 
-    std::vector<HallOfFameEntry> valid;
-    valid.reserve(Gen1Layout::HallOfFameMaxRecords);
+    if (countHint == 0) {
+        return {};
+    }
 
-    // Bank 0 is not checksum-protected; scan all 50 records and validate.
-    for (int i = 0; i < Gen1Layout::HallOfFameMaxRecords; ++i) {
+    std::vector<HallOfFameEntry> entries;
+    entries.reserve(static_cast<std::size_t>(countHint));
+
+    // The count byte identifies the active leading records. Parse those exact
+    // records and preserve slot positions; do not scan and compress around data
+    // that a mistaken species validator happens to reject.
+    for (int i = 0; i < countHint; ++i) {
         const std::size_t recordOff = Gen1Layout::HallOfFameOff
             + static_cast<std::size_t>(i) * Gen1Layout::HallOfFameRecordSize;
 
@@ -2908,71 +2899,38 @@ std::vector<HallOfFameEntry> ReadOnlyData::GetHallOfFame() const {
             }
 
             // Validate: species + level
-            if (!IsLikelyValidGen1SpeciesId(species)) {
-                // If the first slot is invalid, this is almost certainly junk.
-                // Stop reading further slots in this record.
-                if (j == 0) {
-                    entry.team.clear();
-                    break;
-                }
-                continue;
+            if (!Gen1SpeciesLookup::IsValidSpeciesId(species)) {
+                throw std::runtime_error(
+                    "Hall of Fame entry " + std::to_string(i + 1) +
+                    " slot " + std::to_string(j + 1) +
+                    " contains invalid Gen I internal species id " +
+                    std::to_string(species) + ".");
             }
 
             if (level < 1 || level > 100) {
-                if (j == 0) {
-                    entry.team.clear();
-                    break;
-                }
-                continue;
+                throw std::runtime_error(
+                    "Hall of Fame entry " + std::to_string(i + 1) +
+                    " slot " + std::to_string(j + 1) +
+                    " contains an invalid level.");
             }
 
             HallOfFamePokemon mon;
+            mon.partyOrder = j + 1;
             mon.speciesId = species;
             mon.speciesName = Gen1SpeciesLookup::NameFromId(static_cast<u8>(species));
             mon.level = level;
             mon.name = Gen1TextCodec::DecodeName(buffer_, monOff + 0x02, 0x0B);
 
-            // Optional name sanity (helps reject junk)
-            if (!NameLooksReasonable(mon.name)) {
-                if (j == 0) {
-                    entry.team.clear();
-                    break;
-                }
-                continue;
-            }
-
             entry.team.push_back(std::move(mon));
         }
 
-        if (!entry.team.empty()) {
-            valid.push_back(std::move(entry));
+        if (entry.team.empty()) {
+            throw std::runtime_error(
+                "Hall of Fame entry " + std::to_string(i + 1) + " is empty despite the active record count.");
         }
+        entries.push_back(std::move(entry));
     }
-
-    // If the game says 0, show nothing (your requirement).
-    if (countHint == 0) {
-        return {};
-    }
-
-    // Prefer showing the newest `countHint` valid entries.
-    if (static_cast<int>(valid.size()) <= countHint) {
-        // Renumber entries for display (1..N)
-        for (std::size_t i = 0; i < valid.size(); ++i) {
-            valid[i].entryIndex = static_cast<int>(i + 1);
-        }
-        return valid;
-    }
-
-    std::vector<HallOfFameEntry> out;
-    out.reserve(static_cast<std::size_t>(countHint));
-
-    const std::size_t start = valid.size() - static_cast<std::size_t>(countHint);
-    for (std::size_t i = start; i < valid.size(); ++i) {
-        valid[i].entryIndex = static_cast<int>(out.size() + 1);
-        out.push_back(std::move(valid[i]));
-    }
-
-    return out;
+    return entries;
 }
 
 std::string ReadOnlyData::DumpFullSummary() const {

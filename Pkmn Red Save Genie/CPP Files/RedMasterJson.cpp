@@ -727,18 +727,27 @@ void WritePokemonMonJson(std::ostringstream& json,
     json << indent << "    \"sourceOffset\": \"" << HexSize(speciesListOff, 4) << "\"\n";
     json << indent << "  },\n";
     json << indent << "  \"nickname\": { \"value\": \"" << JsonEscape(mon.nickname)
+         << "\", \"losslessValue\": \"" << JsonEscape(Gen1TextCodec::DecodeNameLossless(
+                save, nicknameOff, Gen1Layout::Gen1NameLen))
          << "\", \"rawHex\": \"" << RawHexAt(save, nicknameOff, Gen1Layout::Gen1NameLen)
          << "\", " << FieldMeta(nicknameOff, Gen1Layout::Gen1NameLen, "gen1_text") << " },\n";
     json << indent << "  \"originalTrainer\": { \"name\": \"" << JsonEscape(mon.otName)
+         << "\", \"nameLossless\": \"" << JsonEscape(Gen1TextCodec::DecodeNameLossless(
+                save, otNameOff, Gen1Layout::Gen1NameLen))
          << "\", \"idNo\": " << mon.otIdNo
          << ", \"nameRawHex\": \"" << RawHexAt(save, otNameOff, Gen1Layout::Gen1NameLen)
          << "\", \"nameOffset\": \"" << HexSize(otNameOff, 4) << "\" },\n";
     json << indent << "  \"level\": " << static_cast<int>(mon.level) << ",\n";
     json << indent << "  \"experience\": " << mon.expPoints << ",\n";
-    json << indent << "  \"types\": { \"status\": \"not_decoded\", \"notes\": \"Gen I type lookup is not yet part of Save Genie PokemonMon\" },\n";
+    json << indent << "  \"types\": { \"primaryId\": " << static_cast<int>(mon.type1)
+         << ", \"secondaryId\": " << static_cast<int>(mon.type2)
+         << ", \"confidence\": \"verified_stored_fields\" },\n";
+    json << indent << "  \"catchRate\": { \"value\": " << static_cast<int>(mon.catchRate)
+         << ", \"rawByte\": \"" << HexSize(mon.catchRate, 2)
+         << "\", \"confidence\": \"verified_stored_field\" },\n";
     json << indent << "  \"status\": { \"rawByte\": \"" << HexSize(mon.stats.status, 2)
          << "\", \"name\": \"" << StatusName(mon.stats.status)
-         << "\", \"confidence\": \"" << (partyStats ? "verified" : "not_stored_for_boxed_pokemon") << "\" },\n";
+         << "\", \"confidence\": \"verified_stored_field\" },\n";
     json << indent << "  \"stats\": {\n";
     json << indent << "    \"hpCurrent\": " << mon.stats.hpCurrent << ",\n";
     json << indent << "    \"hpMax\": " << mon.stats.hpMax << ",\n";
@@ -746,7 +755,9 @@ void WritePokemonMonJson(std::ostringstream& json,
     json << indent << "    \"defense\": " << mon.stats.defense << ",\n";
     json << indent << "    \"speed\": " << mon.stats.speed << ",\n";
     json << indent << "    \"special\": " << mon.stats.special << ",\n";
-    json << indent << "    \"interpretation\": \"" << (partyStats ? "live_party_stats" : "not_stored_in_box_structure") << "\"\n";
+    json << indent << "    \"interpretation\": \""
+         << (partyStats ? "live_party_stats" : "current_hp_stored_other_battle_stats_not_stored")
+         << "\"\n";
     json << indent << "  },\n";
     WriteMovesArray(json, save, mon, structOff, indent + "  ");
     json << ",\n";
@@ -902,7 +913,10 @@ void WritePokedexJson(std::ostringstream& json, const PokedexSummary& pokedex, c
     json << indent << "}";
 }
 
-void WriteHallOfFameJson(std::ostringstream& json, const std::vector<HallOfFameEntry>& hof, const std::string& indent) {
+void WriteHallOfFameJson(std::ostringstream& json,
+                         const SaveBuffer& save,
+                         const std::vector<HallOfFameEntry>& hof,
+                         const std::string& indent) {
     json << indent << "{\n";
     json << indent << "  \"entryCount\": " << hof.size() << ",\n";
     json << indent << "  \"sourceRange\": { \"start\": \"" << HexSize(Gen1Layout::HallOfFameOff, 4)
@@ -910,7 +924,8 @@ void WriteHallOfFameJson(std::ostringstream& json, const std::vector<HallOfFameE
     json << indent << "  \"entries\": [\n";
     for (std::size_t i = 0; i < hof.size(); ++i) {
         const HallOfFameEntry& entry = hof[i];
-        const std::size_t entryOff = Gen1Layout::HallOfFameOff + i * Gen1Layout::HallOfFameRecordSize;
+        const std::size_t entryOff = Gen1Layout::HallOfFameOff
+            + static_cast<std::size_t>(entry.entryIndex - 1) * Gen1Layout::HallOfFameRecordSize;
         json << indent << "    {\n";
         json << indent << "      \"entryNumber\": " << entry.entryIndex << ",\n";
         json << indent << "      \"sourceRange\": { \"start\": \"" << HexSize(entryOff, 4)
@@ -918,13 +933,16 @@ void WriteHallOfFameJson(std::ostringstream& json, const std::vector<HallOfFameE
         json << indent << "      \"pokemon\": [\n";
         for (std::size_t j = 0; j < entry.team.size(); ++j) {
             const HallOfFamePokemon& mon = entry.team[j];
-            const std::size_t monOff = entryOff + j * Gen1Layout::HallOfFameMonEntrySize;
-            json << indent << "        { \"partyOrder\": " << (j + 1)
+            const std::size_t monOff = entryOff
+                + static_cast<std::size_t>(mon.partyOrder - 1) * Gen1Layout::HallOfFameMonEntrySize;
+            json << indent << "        { \"partyOrder\": " << mon.partyOrder
                  << ", \"species\": { \"name\": \"" << JsonEscape(mon.speciesName)
                  << "\", \"internalId\": " << static_cast<int>(mon.speciesId)
                  << ", \"nationalDexNumber\": " << DexNoToInt(Gen1SpeciesLookup::DexfromId(mon.speciesId)) << " }"
                  << ", \"level\": " << static_cast<int>(mon.level)
                  << ", \"nickname\": \"" << JsonEscape(mon.name) << "\""
+                 << ", \"nicknameLossless\": \"" << JsonEscape(
+                        Gen1TextCodec::DecodeNameLossless(save, monOff + 0x02, 0x0B)) << "\""
                  << ", \"sourceRange\": { \"start\": \"" << HexSize(monOff, 4)
                  << "\", \"length\": " << Gen1Layout::HallOfFameMonEntrySize << " } }";
             if (j + 1 < entry.team.size()) json << ",";
@@ -1183,6 +1201,8 @@ std::string BuildDecodedJson(const SaveBuffer& save, const ReadOnlyData& reader,
         json << ",\n";
         json << "    \"trainer\": {\n";
         json << "      \"name\": { \"value\": \"" << JsonEscape(trainer.trainerName)
+             << "\", \"losslessValue\": \"" << JsonEscape(Gen1TextCodec::DecodeNameLossless(
+                    save, Gen1Layout::TrainerNameOff, Gen1Layout::TrainerNameLen))
              << "\", \"rawHex\": \"" << RawHexAt(save, Gen1Layout::TrainerNameOff, Gen1Layout::TrainerNameLen)
              << "\", " << FieldMeta(Gen1Layout::TrainerNameOff, Gen1Layout::TrainerNameLen, "gen1_text") << " },\n";
         json << "      \"trainerId\": { \"value\": " << trainer.trainerId
@@ -1191,6 +1211,8 @@ std::string BuildDecodedJson(const SaveBuffer& save, const ReadOnlyData& reader,
         json << "    },\n";
         json << "    \"rival\": {\n";
         json << "      \"name\": { \"value\": \"" << JsonEscape(trainer.rivalName)
+             << "\", \"losslessValue\": \"" << JsonEscape(Gen1TextCodec::DecodeNameLossless(
+                    save, Gen1Layout::RivalNameOff, Gen1Layout::RivalNameLen))
              << "\", \"rawHex\": \"" << RawHexAt(save, Gen1Layout::RivalNameOff, Gen1Layout::RivalNameLen)
              << "\", " << FieldMeta(Gen1Layout::RivalNameOff, Gen1Layout::RivalNameLen, "gen1_text") << " }\n";
         json << "    },\n";
@@ -1283,7 +1305,11 @@ std::string BuildDecodedJson(const SaveBuffer& save, const ReadOnlyData& reader,
         json << "      \"selectedBoxNumber\": ";
         if (selectedBoxValid) json << selectedBoxOneBased << ",\n";
         else json << "null,\n";
-        json << "      \"boxChangedFlag\": " << ((rawCurrentBox & 0x80) ? "true" : "false") << ",\n";
+        json << "      \"hasChangedBoxesBefore\": "
+             << ((rawCurrentBox & 0x80) ? "true" : "false") << ",\n";
+        json << "      \"boxChangedFlag\": "
+             << ((rawCurrentBox & 0x80) ? "true" : "false")
+             << ",\n"; // backward-compatible draft-schema alias
         json << "      \"correspondingPermanentBox\": ";
         if (selectedBoxValid) json << selectedBoxOneBased << ",\n";
         else json << "null,\n";
@@ -1307,7 +1333,7 @@ std::string BuildDecodedJson(const SaveBuffer& save, const ReadOnlyData& reader,
         }
         json << "    },\n";
         json << "    \"hallOfFame\": ";
-        WriteHallOfFameJson(json, hof, "    ");
+        WriteHallOfFameJson(json, save, hof, "    ");
         json << ",\n";
         json << "    \"events\": ";
         WriteNamedFlagsJson(json, events, "    ");

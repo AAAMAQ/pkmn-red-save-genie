@@ -2,7 +2,7 @@
 
 Complete technical research record for `pkmn-red-save-genie`
 
-Author and project lead: MAQ, Big MAQ Studio
+Author and project lead: MAQ / BiG MAQ Studios
 
 Analysis date: 2026-06-19
 
@@ -26,9 +26,9 @@ The current repository is treated as the source of truth for implementation stat
 
 ## Part I - Executive Overview
 
-`pkmn-red-save-genie` is a C++ reverse-engineering and software engineering project created and led by MAQ of Big MAQ Studio.
+`pkmn-red-save-genie` is a C++ reverse-engineering and software engineering project created and led by MAQ / BiG MAQ Studios.
 
-MAQ is the creator and lead developer of Big MAQ Studio and the author of `pkmn-red-save-genie`, a C++ research and software engineering project focused on reverse-engineering, decoding, validating, exporting, and eventually converting Pokemon save data between Generation I and Generation III.
+MAQ / BiG MAQ Studios is the project identity behind `pkmn-red-save-genie`, a C++ research and software engineering project focused on reverse-engineering, decoding, validating, exporting, and eventually converting Pokemon save data between Generation I and Generation III.
 
 The current executable is called `Pkmn Red Save Genie`. The current project is primarily a Generation I save parser, validator, exporter, data-analysis engine, and future safe editor. It reads Pokemon Red/Blue/Yellow-style `.sav` data, interprets raw bytes as meaningful save fields, validates checksums, and exports both human-readable and machine-readable summaries.
 
@@ -524,9 +524,9 @@ Each PC box block is `0x0462` bytes and stores up to 20 Pokemon.
 | `+0x02AA` | OT names. |
 | `+0x0386` | Nicknames. |
 
-Party and boxed Pokemon differ. Party Pokemon store live battle stats. Boxed Pokemon do not store the same visible stats, so zeros in boxed stats are not automatically parser failures.
+Party and boxed Pokemon differ. Party Pokemon store the complete live stat block. Boxed records still store current HP, level, status, types, and catch rate, but not the party-only maximum HP, Attack, Defense, Speed, and Special values.
 
-Current verification warning: `PokemonBoxes.json` in the reference folder shows several boxed Pokemon levels above 100. The source code also contains a code/comment mismatch around boxed level reading: the comment notes many tools treat boxed level as `+0x03`, while the code reads `monOff + 0x21` after requiring a `0x21`-byte struct. Because the project rule is not to change tested behavior during documentation, this is recorded as a verification gap, not edited here.
+Corrective validation on 2026-07-14 resolved the former boxed-level warning. A boxed record is `0x21` bytes: current HP is at `+0x01..+0x02`, level at `+0x03`, status at `+0x04`, types at `+0x05..+0x06`, and catch rate at `+0x07`. The former `+0x21` read was one byte out of record and caused generated withdrawals to retain zero current HP.
 
 ### Regression Anchors
 
@@ -945,12 +945,12 @@ Roadmap:
 | Q-CONV-002 | How should DVs become IVs? |
 | Q-CONV-003 | Which conversion policy should be default? |
 | Q-CONV-004 | How should glitch Pokemon be handled? |
-| Q-GEN1-001 | How should unsupported Gen I text be normalized? |
+| Q-GEN1-001 | Resolved for supported English saves: expose display text plus a lossless byte-aware token form; retain broader regional/modded glyphs as future work. |
 | Q-GEN1-002 | How should regional save differences be detected? |
-| Q-GEN1-003 | Should current box cache or permanent box copy be considered authoritative? |
+| Q-GEN1-003 | Resolved: preserve both; the Bank 1 working box is player-visible and may legitimately differ from the selected permanent-bank copy until box switching commits it. |
 | Q-GEN3-003 | What is the safest first FireRed write operation? |
 | Q-REPORT-001 | How should conversion decisions be reported to users? |
-| Q-GEN1-004 | Why do some current generated PC box levels appear above 100, and is the boxed level offset correct? |
+| Q-GEN1-004 | Resolved: boxed level is `+0x03`; the former `+0x21` read was out of bounds. |
 
 ## Part XXIII - Reproducibility Guide
 

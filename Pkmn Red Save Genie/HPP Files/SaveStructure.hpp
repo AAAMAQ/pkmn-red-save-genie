@@ -399,6 +399,7 @@ public:
     // Methods to find Pokémon and Pokédex from Gen 1 Internal ID
     static std::string NameFromId(u8 speciesId);
     static std::string DexfromId(u8 speciesId);
+    static bool IsValidSpeciesId(u8 speciesId);
 };
 
 // =========================
@@ -460,17 +461,24 @@ public:
 };
 
 // =========================
-// Gen I text codec (minimal; names first)
+// Gen I text codec for fixed-length save text fields.
 // =========================
 class Gen1TextCodec {
 public:
-    // Decode an in-save name field (Gen I charset) into ASCII.
+    // Decode an in-save name field into readable UTF-8.
     // Stops at 0x50 terminator or length.
     static std::string DecodeName(const SaveBuffer& sb, std::size_t off, std::size_t len);
 
-    // Encode ASCII into Gen I charset and write into the save.
+    // Decode into an unambiguous semantic form. Ambiguous glyphs and special
+    // one-byte tokens use forms such as <DOT>, <PERIOD>, <PK>, and <TRAINER>.
+    static std::string DecodeNameLossless(const SaveBuffer& sb, std::size_t off, std::size_t len);
+
+    // Encode readable UTF-8 or lossless tokens into Gen I charset.
     // Writes a 0x50 terminator and pads remaining bytes with 0x50.
     static void EncodeName(SaveBuffer& sb, std::size_t off, std::size_t len, std::string_view name);
+
+    // Encode without writing, for validation and round-trip tests.
+    static std::vector<u8> EncodeNameBytes(std::string_view name, std::size_t len);
 
     // Expose per-character conversions (useful for debugging).
     static char ByteToAscii(u8 byte);

@@ -37,7 +37,7 @@ Highest-value converter conclusion: start FireRed support with a non-destructive
 
 ## 2. Methodology
 
-This pass inspected local source and external cloned repositories under `/private/tmp` and used repository search for relevant terms such as `checksum`, `save`, `party`, `box`, `pokemon`, `species`, `move`, `item`, `event`, `flag`, `map`, `trainer`, `pokedex`, `serialize`, `deserialize`, `encode`, `decode`, `convert`, `transport`, `PID`, `DV`, `IV`, `EV`, `nature`, `ability`, `WASM`, `browser`, `upload`, and `download`.
+This pass inspected local source and external cloned repositories in a temporary workspace outside this repository, then used repository search for relevant terms such as `checksum`, `save`, `party`, `box`, `pokemon`, `species`, `move`, `item`, `event`, `flag`, `map`, `trainer`, `pokedex`, `serialize`, `deserialize`, `encode`, `decode`, `convert`, `transport`, `PID`, `DV`, `IV`, `EV`, `nature`, `ability`, `WASM`, `browser`, `upload`, and `download`.
 
 Files were opened directly before claims were recorded. The live Game Tools Collection URL was opened, but the browser tool did not return useful textual page content; the source repository is therefore the primary evidence for the live tool workflow.
 
@@ -47,7 +47,7 @@ The research avoided ROMs, user save files, generated save exports, and large bi
 
 | Project | URL | Inspected commit / branch | License finding | Maintenance status |
 | --- | --- | --- | --- | --- |
-| Current project | https://github.com/AAAMAQ/pkmn-red-save-genie | Local `main`, `e9e531b99657704e128a723de9337b13420a4925`, 2026-04-19 | Local license not evaluated in this pass | Active local source of truth |
+| Current project | https://github.com/AAAMAQ/pkmn-red-save-genie | Local `main`, `e9e531b99657704e128a723de9337b13420a4925`, 2026-04-19 | MIT; repository license adopted 2026-07-14 | Active local source of truth |
 | Pokemon Red/Blue Save Editor | https://github.com/junebug12851/pokered-save-editor | `master`, `b387f34ef20f311d5ef55ba181047357821b56d2`, 2019-03-31 | Apache-2.0 | Older but technically relevant |
 | Game Tools Collection | https://github.com/RyudoSynbios/game-tools-collection | `master`, `88d5862bfa3cc581515a795c879dd8f09a0d2874`, 2026-06-18 | MIT | Recently active |
 | Game Tools Collection live editor | https://game-tools-collection.com/pokemon-red-blue-and-yellow/save-editor | Live page opened; source repo used for verification | Same project license for source | Live browser tool |
@@ -70,7 +70,7 @@ Project identity:
 | Maintainer | `AAAMAQ` / local user project |
 | Primary purpose | Gen I save research, decoding, JSON/text export, future safe editing, future Red to FireRed conversion |
 | Language/build | C++ with Xcode-style project layout |
-| License | Unknown / not verified in this pass |
+| License | MIT; see repository-root `LICENSE` |
 | Inspected local commit | `e9e531b99657704e128a723de9337b13420a4925` |
 
 Scope:
@@ -641,7 +641,7 @@ No clear root license was found in the inspected clone. Treat as reference-only 
 
 | Project | License found | Direct reuse | Best current use |
 | --- | --- | --- | --- |
-| Current project | Unknown / not verified | Not applicable | Source of truth. |
+| Current project | MIT | Permitted under the repository license | Source of truth; project-authored code and documentation are credited to MAQ / BiG MAQ Studios. |
 | `pokered-save-editor` | Apache-2.0 | Possible with attribution and compliance | Conceptual reference for broad Gen I editor coverage, current box cache, checksum repair, UI. |
 | Game Tools Collection | MIT | Possible with attribution | Conceptual and possible technical reference for browser-local workflow and declarative schemas. |
 | PCCS | No clear root license found | Legal review needed | Reference/optional dependency candidate only. |
