@@ -1,6 +1,11 @@
 # macOS
 .DS_Store
 
+# Local configuration
+.env
+.env.*
+!.env.example
+
 # Xcode
 DerivedData/
 .xcode-derived/
@@ -27,6 +32,22 @@ build/
 
 # PDFs / reference docs
 *.pdf
+
+# Private screenshots, archives, and emulator evidence
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.zip
+*.7z
+*.tar
+*.tar.gz
+*.srm
+*.state
+*.state*
+evidence/private/
+docs/private/
 
 # Local research/archive folders (not production source)
 IMPORTANT PDF and other files IGNORE/
